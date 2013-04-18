@@ -1,6 +1,14 @@
 # RubyGitHooks
 
-TODO: Write a gem description
+RubyGitHooks sets up a reasonable development environment for git hooks.
+
+Git, by default, gives you information that doesn't instantly map to
+what you want.  A pre-receive hook, for instance, doesn't just give
+you the content that's being received.  If you want to write a
+pre-receive hook that can also be used pre-commit, you have to do a
+fair bit of wrapping.
+
+RubyGitHooks does that wrapping for you.
 
 ## Installation
 
@@ -18,7 +26,25 @@ Or install it yourself as:
 
 ## Usage
 
-TODO: Write usage instructions here
+Your new hook should have a Ruby shebang line, require
+"ruby_git_hooks", and then any hooks you want to use.
+
+The hook should be copied or symlinked to the appropriate location, of
+the form ".git/hooks/hook-name".
+
+~~~
+#!/usr/bin/env ruby
+# .git/hooks/pre-receive
+
+require "ruby_git_hooks/all"
+
+Hook.run :case_check
+~~~
+
+You can also require "ruby_git_hooks" and then the specific hooks you
+want, then call Hook.run with no arguments.  It will run all
+registered hooks, which is probably not what you want with "all"
+required.
 
 ## Contributing
 
