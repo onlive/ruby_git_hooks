@@ -26,7 +26,9 @@ require "ruby_git_hooks"
 
 class TestHook < RubyGitHooks::Hook
   def check
-    File.open("#{pch_test_path}", "w") { |f| f.write "abc" }
+    File.open("#{pch_test_path}", "w") do |f|
+      f.puts files_changed.inspect, file_contents.inspect
+    end
     puts "Test hook runs!"
     true
   end

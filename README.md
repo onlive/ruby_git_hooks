@@ -42,7 +42,7 @@ the form ".git/hooks/hook-name".
 
 require "ruby_git_hooks/all"
 
-RubyGitHooks.run CaseClashHook
+RubyGitHooks.run CaseClashHook.new
 ~~~
 
 You can also require "ruby_git_hooks" and then the specific hooks you
@@ -52,6 +52,26 @@ set of hooks that don't require configuration.
 Some hooks won't run until configured.  For instance, the Jira-check
 hook needs to know where your Jira server is before it can do anything
 useful.
+
+You can declare a new hook type in your file if you like:
+
+~~~
+#!/usr/bin/env ruby
+require "ruby_git_hooks"
+
+class TestHook < RubyGitHooks::Hook
+  def check
+    File.open("/tmp/last_commit", "w") do |f|
+      f.puts files_changed.inspect, file_contents.inspect
+    end
+    true
+  end
+end
+
+RubyGitHooks.run TestHook.new
+~~~
+
+
 
 ## Contributing
 

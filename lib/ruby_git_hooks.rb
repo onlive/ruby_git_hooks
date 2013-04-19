@@ -61,9 +61,9 @@ module RubyGitHooks
           base, commit, ref = line.strip.split
           changes.push [base, commit, ref]
         end
-        files_changed = []
-        file_contents = {}
-        file_diffs = {}
+        self.files_changed = []
+        self.file_contents = {}
+        self.file_diffs = {}
         changes.each do |base, commit, ref|
           files_changed += `git diff --name-only #{base}..#{commit}`.split("\n")
           files_changed.each do |file_changed|
@@ -76,9 +76,9 @@ module RubyGitHooks
       },
 
       "pre-commit" => proc {
-        files_changed = `git diff --name-only --cached`.split("\n")
-        file_contents = {}
-        file_diffs = {}
+        self.files_changed = `git diff --name-only --cached`.split("\n")
+        self.file_contents = {}
+        self.file_diffs = {}
 
         files_changed.each do |file_changed|
           file_diffs[file_changed] = `git diff --cached #{file_changed}`
