@@ -4,11 +4,13 @@ require "fileutils"
 require "minitest/autorun"
 
 class BasicHookTest < MiniTest::Unit::TestCase
+  include RubyGitHooks
+
   REPOS_DIR = File.join(File.dirname(__FILE__), "repos")
 
   def setup
     # Empty out the test repos dir
-    FileUtils.rm_rf File.join(REPOS_DIR, "*")
+    Hook.shell! "rm -rf #{File.join(REPOS_DIR, "*")}"
 
     # Create local parent and child repos with a single shared commit
     Dir.chdir REPOS_DIR do
