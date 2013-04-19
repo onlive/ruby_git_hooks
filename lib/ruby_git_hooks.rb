@@ -65,27 +65,27 @@ module RubyGitHooks
         self.file_contents = {}
         self.file_diffs = {}
         changes.each do |base, commit, ref|
-          files_changed += `git diff --name-only #{base}..#{commit}`.split("\n")
+          self.files_changed += Hook.shell!("git diff --name-only #{base}..#{commit}").split("\n")
           files_changed.each do |file_changed|
-            file_contents[file_changed] = `git show #{commit}:#{file_changed}`
-            file_diffs[file_changed] = `git diff #{commit} #{file_changed}`
+            file_contents[file_changed] = Hook.shell!("git show #{commit}:#{file_changed}")
+            file_diffs[file_changed] = Hook.shell!("git log -p #{commit} -- #{file_changed}")
           end
         end
 
-        ls_files = `git ls-tree --full-tree --name-only -r HEAD`.split("\n")
+        ls_files = Hook.shell!("git ls-tree --full-tree --name-only -r HEAD").split("\n")
       },
 
       "pre-commit" => proc {
-        self.files_changed = `git diff --name-only --cached`.split("\n")
+        self.files_changed = Hook.shell!("git diff --name-only --cached").split("\n")
         self.file_contents = {}
         self.file_diffs = {}
 
         files_changed.each do |file_changed|
-          file_diffs[file_changed] = `git diff --cached #{file_changed}`
+          file_diffs[file_changed] = Hook.shell!("git diff --cached #{file_changed}")
           file_contents[file_changed] = File.read(file_changed)
         end
 
-        ls_files = `git ls-files`.split("\n")
+        ls_files = Hook.shell!("git ls-files").split("\n")
       },
     }
 
@@ -174,6 +174,7 @@ module RubyGitHooks
       output = `#{args.join(" ")}`
 
       unless $?.success?
+        STDERR.puts "Job #{args.inspect} failed in dir #{Dir.getwd.inspect}"
         STDERR.puts "Failed job output:\n#{output}\n======"
         raise "Exec of #{args.inspect} failed: #{$?}!"
       end

@@ -18,7 +18,17 @@ class HookTestCase < MiniTest::Unit::TestCase
   end
 
   def add_hook(repo_name, hook_name, contents)
-    filename = "#{repo_name}/.git/hooks/#{hook_name}"
+    # We're adding to either a normal or bare directory.
+    # Check for hooks directory.
+    if File.exist? "#{repo_name}/.git/hooks"
+      hooks_dir = "#{repo_name}/.git/hooks"
+    elsif File.exist? "#{repo_name}/hooks"
+      hooks_dir = "#{repo_name}/hooks"
+    else
+      raise "Can't locate hooks directory under #{repo_name.inspect}!"
+    end
+
+    filename = File.join(hooks_dir, hook_name)
     File.open(filename, "w") do |f|
       f.write(contents)
     end

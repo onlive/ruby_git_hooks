@@ -45,6 +45,14 @@ HOOK
   end
 
   def test_simple_pre_receive
+    add_hook("parent_repo.git", "pre-receive", TEST_HOOK_BODY)
+
+    new_single_file_commit "child_repo"
+    git_push("child_repo")
+
+    assert File.exist?(TEST_PATH), "Test pre-receive hook didn't run!"
+    assert File.read(TEST_PATH).include?("Single-file commit"),
+      "No file contents reached pre-receive hook!"
   end
 
 end
