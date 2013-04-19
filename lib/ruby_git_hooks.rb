@@ -18,28 +18,26 @@ module RubyGitHooks
   # pre-auto-gc, post-rewrite
 
   class Hook
-    class << self
-      # What hooks are running
-      attr_reader :registered_hooks
+    # What hooks are running
+    attr_reader :registered_hooks
 
-      # What command line was run
-      attr_reader :run_as
+    # What command line was run
+    attr_reader :run_as
 
-      # What git hook is being run
-      attr_reader :run_as_hook
+    # What git hook is being run
+    attr_reader :run_as_hook
 
-      # Array of what files were changed
-      attr_accessor :files_changed
+    # Array of what files were changed
+    attr_accessor :files_changed
 
-      # Latest contents of all changed files
-      attr_accessor :file_contents
+    # Latest contents of all changed files
+    attr_accessor :file_contents
 
-      # A human-readable diff per file
-      attr_accessor :file_diffs
+    # A human-readable diff per file
+    attr_accessor :file_diffs
 
-      # All filenames in repo
-      attr_accessor :ls_files
-    end
+    # All filenames in repo
+    attr_accessor :ls_files
 
     HOOK_TYPE_SETUP = {
 
@@ -50,24 +48,18 @@ module RubyGitHooks
           base, commit, ref = line.strip.split
           changes.push [base, commit, ref]
         end
-        Hook.files_changed = []
-        Hook.file_contents = {}
-        Hook.file_diffs = {}
+        files_changed = []
+        file_contents = {}
+        file_diffs = {}
         changes.each do |base, commit, ref|
-          files_changed = `git diff --name-only #{base}..#{commit}`
-          file_contents = {}
-          file_diffs = {}
+          files_changed += `git diff --name-only #{base}..#{commit}`.split("\n")
           files_changed.each do |file_changed|
             file_contents[file_changed] = `git show #{commit}:#{file_changed}`
             file_diffs[file_changed] = `git diff #{commit} #{file_changed}`
           end
-
-          Hook.files_changed ||= files_changed
-          Hook.file_contents.merge! file_contents
-          Hook.file_diffs.merge! file_diffs
         end
 
-        Hook.ls_files = `git ls-tree --full-tree --name-only -r HEAD`.split("\n")
+        ls_files = `git ls-tree --full-tree --name-only -r HEAD`.split("\n")
       },
 
       "pre-commit" => proc {
@@ -80,19 +72,16 @@ module RubyGitHooks
           file_contents[file_changed] = File.read(file_changed)
         end
 
-        Hook.files_changed = files_changed
-        Hook.file_contents = file_contents
-        Hook.file_diffs = file_diffs
-        Hook.ls_files = `git ls-files`.split("\n")
+        ls_files = `git ls-files`.split("\n")
       },
     }
 
-    def self.initial_setup
+    def initial_setup
       @run_from = Dir.getwd
       @run_as = $0
     end
 
-    def self.setup
+    def setup
       Dir.chdir @run_from do
         yield
       end
@@ -136,7 +125,7 @@ module RubyGitHooks
         end
 
         begin
-          setup { hook.check }  # Re-init each time, just in case
+          hook.setup { hook.check }  # Re-init each time, just in case
         rescue
           # Failed.  Return non-zero if that makes a difference.
           STDERR.puts "Hook #{hook.inspect} raised exception: #{$!.inspect}!"
@@ -181,5 +170,13 @@ module RubyGitHooks
 
       output
     end
+  end
+
+  def self.run(*args)
+    Hook.run args
+  end
+
+  def self.register(*args)
+    Hook.register args
   end
 end

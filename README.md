@@ -42,7 +42,7 @@ the form ".git/hooks/hook-name".
 
 require "ruby_git_hooks/all"
 
-Hook.run :case_check
+RubyGitHooks.run CaseClashHook
 ~~~
 
 You can also require "ruby_git_hooks" and then the specific hooks you
