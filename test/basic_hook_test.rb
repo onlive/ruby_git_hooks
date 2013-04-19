@@ -1,6 +1,5 @@
 require "test_helper"
 
-require "fileutils"
 require "minitest/autorun"
 
 class BasicHookTest < HookTestCase
@@ -31,7 +30,8 @@ HOOK
 
     new_bare_repo
     clone_repo
-    Hook.shell! "cd child_repo && echo Bob > README && git add README && git commit -m 'README' && git push"
+    new_single_file_commit
+    git_push
   end
 
   def test_simple_pre_commit
