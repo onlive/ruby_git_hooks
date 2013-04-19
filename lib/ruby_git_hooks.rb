@@ -101,13 +101,33 @@ module RubyGitHooks
       # Nothing yet
     end
 
-    def self.run(*hooks_to_run)
+    def self.get_hooks_to_run(hook_specs)
+      hook_specs.flat_map do |spec|
+        if @registered_hooks[spec]
+          @registered_hooks[spec]
+        elsif spec.is_a?(Hook)
+          [ spec ]
+        elsif spec.is_a?(String)
+          # A string is assumed to be a class name
+          @registered_hooks[Object.const_get(spec)]
+        else
+          raise "Can't find hook for specification: #{spec.inspect}!"
+        end
+      end
+    end
+
+    # Run takes a list of hook specifications.
+    # Those can be Hook classnames or instances of type
+    # Hook.
+    #
+    # @param hook_specs Array[Hook or Class or String] A list of hooks or hook classes
+    def self.run(*hook_specs)
       initial_setup
 
-      run_as_specific_hook
+      run_as_specific_githook
 
       # By default, run all hooks
-      hooks_to_run = @registered_hooks.keys if hooks_to_run.empty?
+      hooks_to_run = get_hooks_to_run(hook_specs)
 
       hooks_to_run.each do |hook|
         unless @registered_hooks[hook]
@@ -128,7 +148,7 @@ module RubyGitHooks
       end
     end
 
-    def self.run_as_specific_hook
+    def self.run_as_specific_githook
       @run_as_hook = HOOK_NAMES.select { |hook| @run_as.include?(hook) }
       unless @run_as_hook
         STDERR.puts "Name #{@run_as.inspect} doesn't include " +
@@ -142,10 +162,24 @@ module RubyGitHooks
       HOOK_TYPE_SETUP[@run_as_hook].call
     end
 
-
-    def self.register(hook_name, hook)
+    def self.register(hook)
       @registered_hooks ||= {}
-      @registered_hooks[hook_name] = hook
+      @registered_hooks[hook.class.name] ||= []
+      @registered_hooks[hook.class.name].push hook
+    end
+
+    # TODO: This should capture both output channels,
+    # check better for failure, possibly do more shell
+    # parsing...
+    def self.shell!(*args)
+      output = `#{args.join(" ")}`
+
+      unless $?.success?
+        STDERR.puts "Failed job output:\n#{output}\n======"
+        raise "Exec of #{args.inspect} failed: #{$?}!"
+      end
+
+      output
     end
   end
 end
