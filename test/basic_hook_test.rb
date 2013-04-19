@@ -3,9 +3,7 @@ require "test_helper"
 require "fileutils"
 require "minitest/autorun"
 
-class BasicHookTest < MiniTest::Unit::TestCase
-  include RubyGitHooks
-
+class BasicHookTest < HookTestCase
   REPOS_DIR = File.join(File.dirname(__FILE__), "repos")
 
   def setup
@@ -14,8 +12,8 @@ class BasicHookTest < MiniTest::Unit::TestCase
 
     # Create local parent and child repos with a single shared commit
     Dir.chdir REPOS_DIR do
-      Hook.shell! "mkdir parent_repo.git && cd parent_repo.git && git init --bare"
-      Hook.shell! "git clone parent_repo.git child_repo"
+      new_bare_repo
+      clone_repo
       Hook.shell! "cd child_repo && echo Bob > README && git add README && git commit -m 'README' && git push"
     end
   end
