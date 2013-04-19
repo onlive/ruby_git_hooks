@@ -72,7 +72,7 @@ module RubyGitHooks
           end
         end
 
-        ls_files = Hook.shell!("git ls-tree --full-tree --name-only -r HEAD").split("\n")
+        self.ls_files = Hook.shell!("git ls-tree --full-tree --name-only -r HEAD").split("\n")
       },
 
       "pre-commit" => proc {
@@ -85,7 +85,7 @@ module RubyGitHooks
           file_contents[file_changed] = File.read(file_changed)
         end
 
-        ls_files = Hook.shell!("git ls-files").split("\n")
+        self.ls_files = Hook.shell!("git ls-files").split("\n")
       },
     }
 
