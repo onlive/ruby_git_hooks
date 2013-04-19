@@ -1,10 +1,10 @@
 require "ruby_git_hooks"
 
-class CaseClashHook < Hook
-  def self.check
+class CaseClashHook < RubyGitHooks::Hook
+  def check
     downcase_hash = {}
 
-    ls_files.split("\n").map(&:strip).each do |filename|
+    ls_files.map(&:strip).each do |filename|
       downcase_hash[filename.downcase] ||= []
       downcase_hash[filename.downcase].push filename
     end
