@@ -12,17 +12,21 @@ RubyGitHooks does that wrapping for you.
 
 ## Installation
 
-Add this line to your application's Gemfile:
+To use with a single Ruby installation:
 
-    gem 'ruby_git_hooks'
+    gem install ruby_git_hooks
 
-And then execute:
+To use with RVM and all Rubies and gemsets:
 
-    $ bundle
+    rvm all do bash -l -c "rvm use @global && gem install ruby_git_hooks"
 
-Or install it yourself as:
+Remember that ruby_git_hooks is invoked by Git, and so it won't
+normally run with Bundler.  Not only do you not need to add it to your
+Gemfile, it probably won't help to do so.  So make sure it's installed
+for every Ruby you use day-to-day from the command line.
 
-    $ gem install ruby_git_hooks
+If you install a new Ruby, you'll need to install ruby_git_hooks in
+its global gemset as well.
 
 ## Usage
 
@@ -42,9 +46,12 @@ Hook.run :case_check
 ~~~
 
 You can also require "ruby_git_hooks" and then the specific hooks you
-want, then call Hook.run with no arguments.  It will run all
-registered hooks, which is probably not what you want with "all"
-required.
+want, then call Hook.run with no arguments.  It will run a standard
+set of hooks that don't require configuration.
+
+Some hooks won't run until configured.  For instance, the Jira-check
+hook needs to know where your Jira server is before it can do anything
+useful.
 
 ## Contributing
 
@@ -53,3 +60,9 @@ required.
 3. Commit your changes (`git commit -am 'Add some feature'`)
 4. Push to the branch (`git push origin my-new-feature`)
 5. Create new Pull Request
+
+## Future (Unimplemented)
+
+To create a single .git/hooks/ruby_git_hooks executable and symlink
+all supported git hooks to it, type "ruby_git_hooks" from your git
+root.
