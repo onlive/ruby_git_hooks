@@ -61,10 +61,11 @@ require "ruby_git_hooks"
 
 class TestHook < RubyGitHooks::Hook
   def check
-    File.open("/tmp/last_commit", "w") do |f|
-      f.puts files_changed.inspect, file_contents.inspect
-    end
-    true
+    fnords = file_contents.values.any? { |v| v.include?("fnord") }
+
+    puts "You may not check in the Fnords!" if fnords
+
+    !fnords
   end
 end
 
