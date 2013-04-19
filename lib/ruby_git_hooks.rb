@@ -18,26 +18,39 @@ module RubyGitHooks
   # pre-auto-gc, post-rewrite
 
   class Hook
-    # What hooks are running
-    attr_reader :registered_hooks
+    class << self
+      # What hooks are running
+      attr_reader :registered_hooks
 
-    # What command line was run
-    attr_reader :run_as
+      # What command line was run
+      attr_reader :run_as
 
-    # What git hook is being run
-    attr_reader :run_as_hook
+      # What directory to run from
+      attr_reader :run_from
 
-    # Array of what files were changed
-    attr_accessor :files_changed
+      # What git hook is being run
+      attr_reader :run_as_hook
 
-    # Latest contents of all changed files
-    attr_accessor :file_contents
+      # Array of what files were changed
+      attr_accessor :files_changed
 
-    # A human-readable diff per file
-    attr_accessor :file_diffs
+      # Latest contents of all changed files
+      attr_accessor :file_contents
 
-    # All filenames in repo
-    attr_accessor :ls_files
+      # A human-readable diff per file
+      attr_accessor :file_diffs
+
+      # All filenames in repo
+      attr_accessor :ls_files
+    end
+
+    # Instances of Hook delegate these methods to the class methods.
+    HOOK_INFO = [ :files_changed, :file_contents, :file_diffs, :ls_files ]
+    HOOK_INFO.each do |info_method|
+      define_method(info_method) do |*args, &block|
+        Hook.send(info_method, *args, &block)
+      end
+    end
 
     HOOK_TYPE_SETUP = {
 
@@ -76,13 +89,13 @@ module RubyGitHooks
       },
     }
 
-    def initial_setup
+    def self.initial_setup
       @run_from = Dir.getwd
       @run_as = $0
     end
 
     def setup
-      Dir.chdir @run_from do
+      Dir.chdir Hook.run_from do
         yield
       end
 
@@ -91,6 +104,8 @@ module RubyGitHooks
     end
 
     def self.get_hooks_to_run(hook_specs)
+      @registered_hooks ||= {}
+
       hook_specs.flat_map do |spec|
         if @registered_hooks[spec]
           @registered_hooks[spec]
@@ -116,14 +131,9 @@ module RubyGitHooks
       run_as_specific_githook
 
       # By default, run all hooks
-      hooks_to_run = get_hooks_to_run(hook_specs)
+      hooks_to_run = get_hooks_to_run(hook_specs.flatten)
 
       hooks_to_run.each do |hook|
-        unless @registered_hooks[hook]
-          STDERR.puts "Can't locate hook #{hook.inspect}!"
-          next
-        end
-
         begin
           hook.setup { hook.check }  # Re-init each time, just in case
         rescue
@@ -138,17 +148,17 @@ module RubyGitHooks
     end
 
     def self.run_as_specific_githook
-      @run_as_hook = HOOK_NAMES.select { |hook| @run_as.include?(hook) }
+      @run_as_hook = HOOK_NAMES.detect { |hook| @run_as.include?(hook) }
       unless @run_as_hook
         STDERR.puts "Name #{@run_as.inspect} doesn't include " +
           "any of: #{HOOK_NAMES.inspect}"
         exit 1
       end
       unless HOOK_TYPE_SETUP[@run_as_hook]
-        STDERR.puts "No setup defined for hook type #{@run_as_hook}!"
+        STDERR.puts "No setup defined for hook type #{@run_as_hook.inspect}!"
         exit 1
       end
-      HOOK_TYPE_SETUP[@run_as_hook].call
+      self.instance_eval &HOOK_TYPE_SETUP[@run_as_hook]
     end
 
     def self.register(hook)
