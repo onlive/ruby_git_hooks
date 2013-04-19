@@ -5,7 +5,23 @@ require "minitest/autorun"
 
 class BasicHookTest < HookTestCase
   REPOS_DIR = File.expand_path File.join(File.dirname(__FILE__), "repos")
+  TEST_PATH = File.join(REPOS_DIR, "hook_test_file")
+  TEST_HOOK_BODY = <<HOOK
+#!/usr/bin/env ruby
+require "ruby_git_hooks"
 
+class TestHook < RubyGitHooks::Hook
+  def check
+    File.open("#{TEST_PATH}", "w") do |f|
+      f.puts files_changed.inspect, file_contents.inspect
+    end
+    puts "Test hook runs!"
+    true
+  end
+end
+
+RubyGitHooks.run TestHook.new
+HOOK
   def setup
     # Empty out the test repos dir
     Hook.shell! "rm -rf #{File.join(REPOS_DIR, "*")}"
@@ -19,31 +35,16 @@ class BasicHookTest < HookTestCase
   end
 
   def test_simple_pre_commit
-    pch_test_path = File.join(REPOS_DIR, "pch_test_file")
-    add_hook("child_repo", "pre-commit", <<HOOK)
-#!/usr/bin/env ruby
-require "ruby_git_hooks"
-
-class TestHook < RubyGitHooks::Hook
-  def check
-    File.open("#{pch_test_path}", "w") do |f|
-      f.puts files_changed.inspect, file_contents.inspect
-    end
-    puts "Test hook runs!"
-    true
-  end
-end
-
-RubyGitHooks.run TestHook.new
-HOOK
+    add_hook("child_repo", "pre-commit", TEST_HOOK_BODY)
 
     new_single_file_commit "child_repo"
 
-    assert File.exist?(pch_test_path), "Test pre-commit hook didn't run!"
+    assert File.exist?(TEST_PATH), "Test pre-commit hook didn't run!"
+    assert File.read(TEST_PATH).include?("Single-file commit"),
+      "No file contents reached pre-commit hook!"
   end
 
-  #def test_simple_pre_receive
-  #  assert true
-  #end
+  def test_simple_pre_receive
+  end
 
 end
