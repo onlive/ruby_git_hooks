@@ -42,6 +42,9 @@ module RubyGitHooks
 
       # All filenames in repo
       attr_accessor :ls_files
+
+      # All current commits (sometimes empty)
+      attr_accessor :commits
     end
 
     # Instances of Hook delegate these methods to the class methods.
@@ -61,6 +64,8 @@ module RubyGitHooks
           base, commit, ref = line.strip.split
           changes.push [base, commit, ref]
         end
+        self.commits = changes.map { |c| c[1] }
+
         self.files_changed = []
         self.file_contents = {}
         self.file_diffs = {}
@@ -79,6 +84,7 @@ module RubyGitHooks
         self.files_changed = Hook.shell!("git diff --name-only --cached").split("\n")
         self.file_contents = {}
         self.file_diffs = {}
+        self.commits = []
 
         files_changed.each do |file_changed|
           file_diffs[file_changed] = Hook.shell!("git diff --cached #{file_changed}")
@@ -93,6 +99,7 @@ module RubyGitHooks
         # Split, cut off leading line to get actual files.
         self.files_changed = last_commit_files.split("\n")[1..-1]
 
+        self.commits = [ Hook.shell!("git log -n 1 --pretty=format:%H").chomp ]
         self.file_contents = {}
         self.file_diffs = {}
 
