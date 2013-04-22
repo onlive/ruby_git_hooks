@@ -188,7 +188,7 @@ module RubyGitHooks
         STDERR.puts "No setup defined for hook type #{@run_as_hook.inspect}!"
         exit 1
       end
-      self.instance_eval &HOOK_TYPE_SETUP[@run_as_hook]
+      self.instance_eval(&HOOK_TYPE_SETUP[@run_as_hook])
     end
 
     def self.register(hook)
