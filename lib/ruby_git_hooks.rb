@@ -133,17 +133,23 @@ module RubyGitHooks
       # By default, run all hooks
       hooks_to_run = get_hooks_to_run(hook_specs.flatten)
 
+      failed_hooks = []
+      val = nil
       hooks_to_run.each do |hook|
         begin
-          hook.setup { hook.check }  # Re-init each time, just in case
+          hook.setup { val = hook.check }  # Re-init each time, just in case
+          failed_hooks.push(hook) unless val
         rescue
           # Failed.  Return non-zero if that makes a difference.
           STDERR.puts "Hook #{hook.inspect} raised exception: #{$!.inspect}!"
-          if CAN_FAIL_HOOKS.include?(@run_as_hook)
-            STDERR.puts "Exiting!"
-            exit 1
-          end
+          failed_hooks.push hook
         end
+      end
+
+      if CAN_FAIL_HOOKS.include?(@run_as_hook) && failed_hooks.size > 0
+        STDERR.puts "Hooks failed: #{failed_hooks.inspect}"
+        STDERR.puts "Exiting!"
+        exit 1
       end
     end
 

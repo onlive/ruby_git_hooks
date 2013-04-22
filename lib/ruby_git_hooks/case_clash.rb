@@ -17,6 +17,6 @@ class CaseClashHook < RubyGitHooks::Hook
       end
     end
 
-    raise "Case clash!" unless okay
+    okay
   end
 end
