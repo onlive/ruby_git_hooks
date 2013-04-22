@@ -48,7 +48,8 @@ module RubyGitHooks
     end
 
     # Instances of Hook delegate these methods to the class methods.
-    HOOK_INFO = [ :files_changed, :file_contents, :file_diffs, :ls_files ]
+    HOOK_INFO = [ :files_changed, :file_contents, :file_diffs, :ls_files,
+                  :commits ]
     HOOK_INFO.each do |info_method|
       define_method(info_method) do |*args, &block|
         Hook.send(info_method, *args, &block)
@@ -130,6 +131,10 @@ module RubyGitHooks
     def self.get_hooks_to_run(hook_specs)
       @registered_hooks ||= {}
 
+      if hook_specs.empty?
+        return @registered_hooks.values.inject([], &:+)
+      end
+
       hook_specs.flat_map do |spec|
         if @registered_hooks[spec]
           @registered_hooks[spec]
@@ -165,7 +170,7 @@ module RubyGitHooks
           failed_hooks.push(hook) unless val
         rescue
           # Failed.  Return non-zero if that makes a difference.
-          STDERR.puts "Hook #{hook.inspect} raised exception: #{$!.inspect}!"
+          STDERR.puts "Hook #{hook.inspect} raised exception: #{$!.inspect}!\n#{$!.backtrace.join("\n")}"
           failed_hooks.push hook
         end
       end
@@ -217,7 +222,7 @@ module RubyGitHooks
   class << self
     [ :run, :register, :run_as ].each do |method|
       define_method(method) do |*args, &block|
-        Hook.send(method, *args, &block)
+        RubyGitHooks::Hook.send(method, *args, &block)
       end
     end
   end
