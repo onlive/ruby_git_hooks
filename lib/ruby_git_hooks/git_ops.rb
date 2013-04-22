@@ -58,8 +58,8 @@ module RubyGitHooks::GitOps
     Hook.shell!("cd #{repo_name} && git log -n 1 --format=%H").chomp
   end
 
-  def git_push(repo_name = "child_repo")
-    Hook.shell! "cd #{repo_name} && git push"
+  def git_push(repo_name = "child_repo", remote = "origin", branch = "master")
+    Hook.shell! "cd #{repo_name} && git push #{remote} #{branch}"
   end
 
   def rewind_one_commit(repo_name = "child_repo")
