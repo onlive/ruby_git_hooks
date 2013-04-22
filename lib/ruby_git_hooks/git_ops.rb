@@ -1,7 +1,9 @@
 module RubyGitHooks; end
 
-# TODO: some kind of check to keep from messing with the RubyGitHooks repo
-# by accident.
+# TODO: this is currently only useful for unit tests, because it's
+# very dependent on what directory it's executed from.  Grit can help
+# with this while also keeping from messing up the top repo by
+# accident.
 
 module RubyGitHooks::GitOps
   extend self
