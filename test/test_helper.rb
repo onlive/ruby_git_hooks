@@ -8,6 +8,6 @@ require "ruby_git_hooks"
 require "ruby_git_hooks/git_ops"
 
 class HookTestCase < MiniTest::Unit::TestCase
-  include RubyGitHooks
+  Hook = RubyGitHooks::Hook
   include RubyGitHooks::GitOps
 end
