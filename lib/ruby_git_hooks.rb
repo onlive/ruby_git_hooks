@@ -75,6 +75,8 @@ module RubyGitHooks
         self.ls_files = Hook.shell!("git ls-tree --full-tree --name-only -r HEAD").split("\n")
       },
 
+      "post-receive" => HOOK_TYPE_SETUP["pre-receive"],
+
       "pre-commit" => proc {
         self.files_changed = Hook.shell!("git diff --name-only --cached").split("\n")
         self.file_contents = {}
@@ -87,6 +89,22 @@ module RubyGitHooks
 
         self.ls_files = Hook.shell!("git ls-files").split("\n")
       },
+
+      "post-commit" => proc {
+        last_commit_files = Hook.shell!("git log --oneline --name-only -1")
+        # Split, cut off leading line to get actual files.
+        self.files_changed = last_commit_files.split("\n")[1..-1]
+
+        self.file_contents = {}
+        self.file_diffs = {}
+
+        files_changed.each do |file_changed|
+          file_diffs[file_changed] = Hook.shell!("git log --oneline -p HEAD~..HEAD #{file_changed}")
+          file_contents[file_changed] = File.read(file_changed)
+        end
+
+        self.ls_files = Hook.shell!("git ls-files").split("\n")
+      }
     }
 
     def self.initial_setup
