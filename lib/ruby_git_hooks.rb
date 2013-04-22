@@ -5,7 +5,7 @@ require "ruby_git_hooks/version"
 # screw it, it's a prototype.  The API will work fine when the implementation
 # gets fixed up.
 
-# TODO: wrap git calls in some saner way.  Not sure Grit counts as "saner".
+# TODO: wrap git calls in some saner way.  Grit would be saner than this.
 
 module RubyGitHooks
   # This isn't all hook names, just the ones we already support.
