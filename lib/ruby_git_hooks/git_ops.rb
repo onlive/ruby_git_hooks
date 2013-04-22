@@ -1,5 +1,8 @@
 module RubyGitHooks; end
 
+# TODO: some kind of check to keep from messing with the RubyGitHooks repo
+# by accident.
+
 module RubyGitHooks::GitOps
   extend self
 
@@ -49,11 +52,15 @@ module RubyGitHooks::GitOps
     @single_file_counter += 1
   end
 
-  def last_commit(repo_name = "child_repo")
-    Hook.shell!("git log -n 1 --format=%H").chomp
+  def last_commit_sha(repo_name = "child_repo")
+    Hook.shell!("cd #{repo_name} && git log -n 1 --format=%H").chomp
   end
 
   def git_push(repo_name = "child_repo")
     Hook.shell! "cd #{repo_name} && git push"
+  end
+
+  def rewind_one_commit(repo_name = "child_repo")
+    Hook.shell! "cd #{repo_name} && git reset --hard HEAD~"
   end
 end
