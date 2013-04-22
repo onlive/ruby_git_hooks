@@ -4,11 +4,13 @@ RubyGitHooks sets up a reasonable development environment for git hooks.
 
 Git, by default, gives you information that doesn't instantly map to
 what you want.  A pre-receive hook, for instance, doesn't just give
-you the content that's being received.  If you want to write a
-pre-receive hook that can also be used pre-commit, you have to do a
-fair bit of wrapping.
+you the content that's being received.  You have to extract it by
+running git commands.  If you want to write a pre-receive hook that
+can also be used pre-commit, you have to do a fair bit of wrapping.
 
-RubyGitHooks does that wrapping for you.
+RubyGitHooks does that extracting and wrapping for you.  It's a
+somewhat slower wrapper (but still very fast, this is Git) that can be
+far more convenient to write.
 
 ## Installation
 
@@ -20,13 +22,13 @@ To use with RVM and all Rubies and gemsets:
 
     rvm all do bash -l -c "rvm use @global && gem install ruby_git_hooks"
 
-Remember that ruby_git_hooks is invoked by Git, and so it won't
-normally run with Bundler.  Not only do you not need to add it to your
-Gemfile, it probably won't help to do so.  So make sure it's installed
-for every Ruby you use day-to-day from the command line.
+Remember that ruby_git_hooks is invoked by Git -- it won't normally
+run with Bundler.  Not only do you not need to add it to your Gemfile,
+it probably won't help.  So make sure it's installed for every Ruby
+you use day-to-day from the command line.
 
-If you install a new Ruby, you'll need to install ruby_git_hooks in
-its global gemset as well.
+If you install a new Ruby then you'll need to install ruby_git_hooks
+in its global gemset as well.
 
 ## Usage
 
