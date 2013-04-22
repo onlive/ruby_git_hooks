@@ -75,8 +75,6 @@ module RubyGitHooks
         self.ls_files = Hook.shell!("git ls-tree --full-tree --name-only -r HEAD").split("\n")
       },
 
-      "post-receive" => HOOK_TYPE_SETUP["pre-receive"],
-
       "pre-commit" => proc {
         self.files_changed = Hook.shell!("git diff --name-only --cached").split("\n")
         self.file_contents = {}
@@ -106,6 +104,7 @@ module RubyGitHooks
         self.ls_files = Hook.shell!("git ls-files").split("\n")
       }
     }
+    HOOK_TYPE_SETUP["post-receive"] = HOOK_TYPE_SETUP["pre-receive"]
 
     def self.initial_setup
       @run_from = Dir.getwd
@@ -207,11 +206,12 @@ module RubyGitHooks
     end
   end
 
-  def self.run(*args)
-    Hook.run args
-  end
-
-  def self.register(*args)
-    Hook.register args
+  # Forward these calls from RubyGitHooks to RubyGitHooks::Hook
+  class << self
+    [ :run, :register, :run_as ].each do |method|
+      define_method(method) do |*args, &block|
+        Hook.send(method, *args, &block)
+      end
+    end
   end
 end
