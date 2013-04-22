@@ -30,34 +30,92 @@ its global gemset as well.
 
 ## Usage
 
-Your new hook should have a Ruby shebang line, require
-"ruby_git_hooks", and then any hooks you want to use.
+Your new hook should have a Ruby shebang line.  You can require
+ruby_git_hooks and/or your hook on the shebang line, or in the text of
+the file.  You can use any hooks you want or define your own.
 
 The hook should be copied or symlinked to the appropriate location, of
 the form ".git/hooks/hook-name".
 
-~~~
-#!/usr/bin/env ruby
-# .git/hooks/pre-receive
+Here's an example: a pre-receive hook that uses the shebang line to
+require ruby_git_hooks/case_clash, then runs it.
 
-require "ruby_git_hooks/all"
+~~~
+#!/usr/bin/env ruby -rruby_git_hooks/case_clash
+# Put in .git/hooks/pre-receive and make it executable!
 
 RubyGitHooks.run CaseClashHook.new
 ~~~
 
-You can also require "ruby_git_hooks" and then the specific hooks you
-want, then call Hook.run with no arguments.  It will run a standard
-set of hooks that don't require configuration.
+### Multiple Git Hooks, One RubyGitHook
 
-Some hooks won't run until configured.  For instance, the Jira-check
-hook needs to know where your Jira server is before it can do anything
-useful.
+You can put a single hook in and symlink it:
+
+~~~
+> cp my_hook.rb .git/hooks/pre-receive
+> chmod +x .git/hooks/pre-receive
+> ln -s .git/hooks/pre-receive .git/hooks/pre-commit
+~~~
+
+Obviously this works better when the hook is meaningful in more than
+one situation.  You wouldn't want four or five different places to
+notify you by email.
+
+### Multiple Hooks and RubyGitHooks.register
+
+You can call register on multiple hooks and then run them:
+
+~~~
+#!/usr/bin/env ruby -rruby_git_hooks
+# Put in .git/hooks/post-receive and make it executable!
+require "case_clash"
+require "copyright_check"
+
+RubyGitHooks.register CaseClashHook.new
+RubyGitHooks.register CopyrightCheck.new "domain" => "onlive.com",
+       "from" => "OnLive Copyright Reminders",
+       "via" => {
+                  :address => "smtp.onlive.com",
+                  :domain => "onlive.com"
+                }
+
+RubyGitHooks.run  # Run both
+~~~
+
+### Run By Git Hook Type
+
+You can have a single RubyGitHook file and symlink it to *all* your
+git hooks, too.  But then you probably don't want every RubyGitHook to
+run for each type of git hook -- your pre-commit and post-commit hooks
+may be different, for instance.
+
+~~~
+#!/usr/bin/env ruby -rruby_git_hooks
+# Put in .git/hooks/post-receive and make it executable!
+require "case_clash"
+require "copyright_check"
+
+if RubyGitHooks.run_as_hook =~ /pre-/
+  RubyGitHooks.run CaseClashHook.new
+end
+
+if RubyGitHooks.run_as_hook =~ /post-/
+  RubyGitHooks.run CopyrightCheck.new "domain" => "onlive.com",
+       "from" => "OnLive Copyright Reminders",
+       "via" => {
+                  :address => "smtp.onlive.com",
+                  :domain => "onlive.com"
+                }
+end
+~~~
+
+### New Hook Types
 
 You can declare a new hook type in your file if you like:
 
 ~~~
 #!/usr/bin/env ruby
-require "ruby_git_hooks"
+require "ruby_git_hooks"  # Not in the shebang line, if that's your thing.
 
 class TestHook < RubyGitHooks::Hook
   def check
