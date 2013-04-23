@@ -7,11 +7,11 @@ begin
   require "ruby_git_hooks"
 rescue LoadError
   STDERR.puts "Can't find ruby_git_hooks gem. " +
-    "Are you sure it's installed in this gemset?"
+    "Are you sure it's installed in this gemset? "
   exit 1
 end
 
-hook_contents = DATA.read
+hook_contents = RubyGitHooks.shebang + DATA.read
 
 # Change into git top-level dir
 until File.exist? ".git"
@@ -43,8 +43,7 @@ end
 puts "Done!"
 
 __END__
-#!/usr/bin/env ruby
-
+# No shebang in onlive_hook_setup, will be added.
 begin
   require "ruby_git_hooks"
 rescue LoadError
