@@ -25,7 +25,7 @@ TEST
   end
 
   def test_case_clash_pre_receive
-    add_hook("child_repo", "pre-receive", TEST_HOOK_BODY)
+    add_hook("parent_repo.git", "pre-receive", TEST_HOOK_BODY)
 
     # Use dd to generate binary file with random contents
     system("dd if=/dev/urandom of=child_repo/BigFile.log bs=120000 count=1")
