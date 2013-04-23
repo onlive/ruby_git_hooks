@@ -132,9 +132,67 @@ end
 RubyGitHooks.run TestHook.new
 ~~~
 
+## Troubleshooting
 
+### It Says It's Not Installed
 
-## Contributing
+Sometimes you can get an error saying that ruby_git_hooks isn't
+installed when you try a git operation.  Please see
+bin/onlive_git_hooks for a big chunk of useful diagnostic info you may
+want when debugging this problem.
+
+Simple stuff to try:
+
+* Reinstall ruby_git_hooks in all RVM Rubies (see INSTALLATION) and
+  the system Ruby, if any.
+
+* Upgrade Git to 1.8.2 or higher.
+
+* If you don't use /usr/bin/ruby, move it to /usr/bin/old_ruby so it
+  doesn't get in the way.  Your system Ruby is probably ancient Ruby
+  1.8.7 and everything sane uses 1.9.2 or higher.
+
+Obvious problems:
+
+* Not installed.  Fix this for the Ruby or gemset that git runs.
+
+* Running in a wrong/unexpected Ruby.  Often this is /usr/bin/ruby,
+  the system Ruby and/or Ruby 1.8.7.  You can move the bad Ruby out of
+  the way.  Or you can install ruby_git_hooks into it.  Or you can
+  adjust paths, shebang lines and environment variables to make git
+  run the right Ruby.  Note that Git 1.7 adds /usr/bin to the front of
+  your path so you may get an expected Ruby.  Git 1.8 does not.
+  Consider upgrading.
+
+* Running in Bundler without meaning to.  If your hook's shebang
+  includes or can run Bundler and you're using a Gemfile without
+  ruby_git_hooks then it's basically not installed.  Usually the right
+  answer is "don't run Bundler for your git hooks."  Otherwise you'll
+  have to add ruby_git_hooks to your Gemfile and/or add a new Gemfile
+  to .git/hooks.
+
+### Ruby 1.8.7
+
+We specifically do not test on Ruby 1.8.7.
+
+We don't try to sabotage it, but it's not on our radar.
+
+There's a good chance that ruby_git_hooks doesn't work on 1.8.7 at any
+given time.  This won't change.  Ruby 1.8.7 is ancient and as of June
+2013 will no longer even receive security fixes.  Please upgrade.
+Seriously, it's time.
+
+### Git 1.7
+
+Git 1.7 has had some problems, and may have more.  Specifically:
+
+* Git 1.7 does not set up parent-branch tracking by default, and
+  some of our unit tests may require that.
+* Git 1.7 prepends /usr/bin to the path when running hooks (see above).
+
+We make a best effort to support it, but 1.8 is a smoother experience.
+
+## Contributing to RubyGitHooks
 
 1. Fork it
 2. Create your feature branch (`git checkout -b my-new-feature`)
@@ -146,4 +204,4 @@ RubyGitHooks.run TestHook.new
 
 To create a single .git/hooks/ruby_git_hooks executable and symlink
 all supported git hooks to it, type "ruby_git_hooks" from your git
-root.
+root.  Right now there is only an OnLive-specific example of this.
