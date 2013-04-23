@@ -6,7 +6,7 @@ class BasicHookTest < HookTestCase
   REPOS_DIR = File.expand_path File.join(File.dirname(__FILE__), "repos")
   TEST_PATH = File.join(REPOS_DIR, "hook_test_file")
   TEST_HOOK_BODY = <<HOOK
-#!/usr/bin/env ruby
+#{RubyGitHooks.shebang}
 require "ruby_git_hooks"
 
 class TestHook < RubyGitHooks::Hook

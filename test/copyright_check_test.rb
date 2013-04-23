@@ -8,7 +8,7 @@ class RealCopyrightCheckHookTest < HookTestCase
   FAKE_MAILER = File.join(File.dirname(__FILE__), "fake_mailer")
   MAILER_FILE = File.join(File.dirname(__FILE__), "mail_params")
   TEST_HOOK_BASIC = <<TEST
-#!/usr/bin/env ruby
+#{RubyGitHooks.shebang}
 require "ruby_git_hooks/copyright_check"
 
 RubyGitHooks.register CopyrightCheckHook.new("domain" => "onlive.com",
@@ -24,7 +24,7 @@ RubyGitHooks.run
 TEST
 
   TEST_HOOK_NO_SEND = <<TEST
-#!/usr/bin/env ruby
+#{RubyGitHooks.shebang}
 require "ruby_git_hooks/copyright_check"
 
 RubyGitHooks.run CopyrightCheckHook.new("no_send" => true)

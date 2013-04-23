@@ -194,12 +194,20 @@ ERR
     end
 
     def self.run_as_specific_githook
-      @run_as_hook = HOOK_NAMES.detect { |hook| @run_as.include?(hook) }
+      if ARGV.include? "--hook"
+        idx = ARGV.find_index "--hook"
+        @run_as_hook = ARGV[idx + 1]
+        2.times { ARGV.delete_at(idx) }
+      else
+        @run_as_hook = HOOK_NAMES.detect { |hook| @run_as.include?(hook) }
+      end
+
       unless @run_as_hook
         STDERR.puts "Name #{@run_as.inspect} doesn't include " +
           "any of: #{HOOK_NAMES.inspect}"
         exit 1
       end
+
       unless HOOK_TYPE_SETUP[@run_as_hook]
         STDERR.puts "No setup defined for hook type #{@run_as_hook.inspect}!"
         exit 1
@@ -237,4 +245,11 @@ ERR
       end
     end
   end
+
+  def self.shebang
+    ENV['RUBYGITHOOKS_SHEBANG']
+  end
 end
+
+# Default to /usr/bin/env ruby for shebang line
+ENV['RUBYGITHOOKS_SHEBANG'] ||= "#!/usr/bin/env ruby"

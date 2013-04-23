@@ -5,7 +5,7 @@ require "minitest/autorun"
 class CaseClashHookTest < HookTestCase
   REPOS_DIR = File.expand_path File.join(File.dirname(__FILE__), "repos")
   TEST_HOOK_BODY = <<TEST
-#!/usr/bin/env ruby
+#{RubyGitHooks.shebang}
 require "ruby_git_hooks/case_clash"
 
 RubyGitHooks.run CaseClashHook.new

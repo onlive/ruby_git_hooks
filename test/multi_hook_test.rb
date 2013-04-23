@@ -6,7 +6,7 @@ require "pony"
 class CopyrightCheckHookTest < HookTestCase
   REPOS_DIR = File.expand_path File.join(File.dirname(__FILE__), "repos")
   TEST_HOOK_MULTI_REG = <<TEST
-#!/usr/bin/env ruby
+#{RubyGitHooks.shebang}
 require "ruby_git_hooks/ruby_debug"
 require "ruby_git_hooks/copyright_check"
 
@@ -17,7 +17,7 @@ RubyGitHooks.run
 TEST
 
   TEST_HOOK_MULTI_RUN = <<TEST
-#!/usr/bin/env ruby
+#{RubyGitHooks.shebang}
 require "ruby_git_hooks/ruby_debug"
 require "ruby_git_hooks/copyright_check"
 

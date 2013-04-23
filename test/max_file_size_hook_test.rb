@@ -5,7 +5,7 @@ require "minitest/autorun"
 class MaxFileSizeHookTest < HookTestCase
   REPOS_DIR = File.expand_path File.join(File.dirname(__FILE__), "repos")
   TEST_HOOK_BODY = <<TEST
-#!/usr/bin/env ruby
+#{RubyGitHooks.shebang}
 require "ruby_git_hooks/max_file_size"
 
 RubyGitHooks.run MaxFileSizeHook.new(100000)
