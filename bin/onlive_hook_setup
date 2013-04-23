@@ -79,6 +79,7 @@ if ["pre-commit", "pre-receive"].include?(run_as)
 elsif ["post-commit", "post-receive"].include?(run_as)
   RubyGitHooks.register CopyrightCheckHook.new \
          "domain" => "onlive.com",
+         "company_check" => /OL2,?\s+inc/i,
          "from" => "OnLive Copyright Cop <noreply@onlive.com>",
          "via" => {
                     :address => "exchange01.pao529.onlive.com",
