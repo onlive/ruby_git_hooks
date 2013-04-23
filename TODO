@@ -1,4 +1,14 @@
 * Debug various cases for first commit in new repo.
+
 * Add more hook types
-* Wire up pre-rebase hooks to allow validations for multi-file criteria.  Then
-  you can't rebase in a new file if it would violate the CaseClashHook, say.
+
+* Wire up pre-rebase hooks to allow validations for multi-file
+  criteria.  Then you can't rebase in a new file if it would violate
+  the CaseClashHook, say.
+
+* Document built-in hooks like CopyrightCheck
+
+* Add base hook class for a hook that checks (pre-commit, pre-receive)
+  and notifies (post-commit, post-receive) plus eventually vets
+  rebases (pre-rebase).  Basically, there's a whole lifecycle here and
+  right now it's all disconnected.
