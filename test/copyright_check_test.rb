@@ -3,7 +3,7 @@ require "test_helper"
 require "minitest/autorun"
 require "pony"
 
-class CopyrightCheckHookTest < HookTestCase
+class RealCopyrightCheckHookTest < HookTestCase
   REPOS_DIR = File.expand_path File.join(File.dirname(__FILE__), "repos")
   FAKE_MAILER = File.join(File.dirname(__FILE__), "fake_mailer")
   MAILER_FILE = File.join(File.dirname(__FILE__), "mail_params")
