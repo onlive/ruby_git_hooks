@@ -1,2 +1,4 @@
 * Debug various cases for first commit in new repo.
 * Add more hook types
+* Wire up pre-rebase hooks to allow validations for multi-file criteria.  Then
+  you can't rebase in a new file if it would violate the CaseClashHook, say.
