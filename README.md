@@ -161,10 +161,13 @@ tell it what shebang line to use.
 
 Set it as an environment variable:
 
-    > export RUBYGITHOOKS_SHEBANG="/home/UserName/.rvm/bin/githooks_ruby"
+    > export RUBYGITHOOKS_SHEBANG='#!/usr/bin/env /home/UserName/.rvm/bin/githooks_ruby'
 
 You need this set when generating hook scripts or running the unit
 tests of RubyGitHooks itself, but not later when using the hooks.
+
+You need the /usr/bin/env in it because your wrapper is a shellscript,
+and a shebang can't point to another shellscript on most systems.
 
 ## Troubleshooting
 
