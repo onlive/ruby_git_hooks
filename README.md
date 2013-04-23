@@ -4,13 +4,12 @@ RubyGitHooks sets up a reasonable development environment for git hooks.
 
 Git, by default, gives you information that doesn't instantly map to
 what you want.  A pre-receive hook, for instance, doesn't just give
-you the content that's being received.  You have to extract it by
-running git commands.  If you want to write a pre-receive hook that
-can also be used pre-commit, you have to do a fair bit of wrapping.
+you the content that's being received.  You have to extract the
+content by running git commands.  If you want to write a pre-receive
+hook that can also be used pre-commit, you have to do a fair bit of
+wrapping.
 
-RubyGitHooks does that extracting and wrapping for you.  It's a
-somewhat slower wrapper (but still very fast, this is Git) that can be
-far more convenient to write.
+RubyGitHooks does that extracting and wrapping for your convenience.
 
 ## Installation
 
@@ -20,13 +19,13 @@ To use with a single Ruby installation:
 
 Remember that ruby_git_hooks is invoked by Git -- it won't normally
 run with Bundler.  Not only do you not need to add it to your Gemfile,
-it probably won't help.  So make sure it's installed for every Ruby
-you use day-to-day from the command line.
+it probably won't help.  So make sure ruby_git_hooks is installed for
+every Ruby you use day-to-day from the command line.
 
 ## Usage
 
-Your new hook should have a Ruby shebang line (see below).  You can
-use the included hooks or define your own.
+Your new hook script should have a Ruby shebang line (see below).  You
+can use the included hooks or define your own.
 
 The hook should be copied or symlinked to the appropriate location, of
 the form ".git/hooks/hook-name".
@@ -36,7 +35,7 @@ require ruby_git_hooks/case_clash, then runs it.
 
 ~~~
 #!/usr/bin/env ruby
-# Put in .git/hooks/pre-receive and make it executable!
+# Put this file in .git/hooks/pre-receive and make it executable!
 require "ruby_git_hooks/case_clash"
 
 RubyGitHooks.run CaseClashHook.new
@@ -44,17 +43,19 @@ RubyGitHooks.run CaseClashHook.new
 
 ### Multiple Git Hooks, One RubyGitHook
 
-You can put a single hook in and symlink it:
+You can put a single hook script in and symlink it from one or more
+git-hook locations:
 
 ~~~
-> cp my_hook.rb .git/hooks/pre-receive
-> chmod +x .git/hooks/pre-receive
-> ln -s .git/hooks/pre-receive .git/hooks/pre-commit
+> cp my_hook.rb .git/hooks/
+> chmod +x .git/hooks/my_hook.rb
+> ln -s .git/hooks/my_hook.rb .git/hooks/pre-commit
+> ln -s .git/hooks/my_hook.rb .git/hooks/pre-receive
 ~~~
 
-Obviously this works better when the hook is meaningful in more than
-one situation.  You wouldn't want four or five different places to
-notify you by email.
+Use this when the hook is meaningful in more than one situation.
+Watch out!  You don't want four or five of the same email
+notification.
 
 ### Multiple Hooks and RubyGitHooks.register
 
@@ -79,10 +80,10 @@ RubyGitHooks.run  # Run both
 
 ### Run By Git Hook Type
 
-You can have a single RubyGitHook file and symlink it to *all* your
-git hooks, too.  But then you probably don't want every RubyGitHook to
-run for each type of git hook -- your pre-commit and post-commit hooks
-may be different, for instance.
+You can have a single RubyGitHook file and symlink it to all supported
+git hooks.  But then you probably don't want every RubyGitHook to run
+for each type of git hook -- your pre-commit and post-commit hooks may
+be different, for instance.
 
 ~~~
 #!/usr/bin/env ruby
@@ -110,7 +111,7 @@ You can declare a new hook type in your file if you like:
 
 ~~~
 #!/usr/bin/env ruby
-require "ruby_git_hooks"  # Not in the shebang line, if that's your thing.
+require "ruby_git_hooks"
 
 class TestHook < RubyGitHooks::Hook
   def check
@@ -161,6 +162,9 @@ tell it what shebang line to use.
 Set it as an environment variable:
 
     > export RUBYGITHOOKS_SHEBANG="/home/UserName/.rvm/bin/githooks_ruby"
+
+You need this set when generating hook scripts or running the unit
+tests of RubyGitHooks itself, but not later when using the hooks.
 
 ## Troubleshooting
 
