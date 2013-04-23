@@ -64,7 +64,7 @@ class CopyrightCheckHook < RubyGitHooks::Hook
     end
 
     bad_num = no_notice.size + outdated_notice.size + outdated_company.size
-    return if bad_num < 1
+    return true if bad_num < 1
 
     desc = build_description(no_notice, outdated_notice, outdated_company)
 
@@ -75,14 +75,21 @@ class CopyrightCheckHook < RubyGitHooks::Hook
       recipients[name] = email
     end
 
-    recipients.each do |name, email|
-      ret = Pony.mail :to => email,
-                :from => "#{@options["from"]}",
-                :subject => @options["subject"],
-                :body => desc,
-                :via => @options["via"],
-                :via_options => @options["via_options"]
+    unless @options["no_send"] || @options["via"] == "no_send"
+      recipients.each do |name, email|
+        ret = Pony.mail :to => email,
+                  :from => "#{@options["from"]}",
+                  :subject => @options["subject"],
+                  :body => desc,
+                  :via => @options["via"],
+                  :via_options => @options["via_options"]
+      end
     end
+
+    puts "Problems found in commit:\n#{desc}"
+
+    # Block commit if installed as a pre-commit or pre-receive hook
+    false
   end
 
   protected
