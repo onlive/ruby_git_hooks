@@ -27,6 +27,9 @@ TEST
     # Empty out the test repos dir
     Hook.shell! "rm -rf #{File.join(REPOS_DIR, "*")}"
 
+    # Remove test mail file
+    Hook.shell! "rm -f #{MAILER_FILE}"
+
     # Create local parent and child repos with a single shared commit
     Dir.chdir REPOS_DIR
 
@@ -47,8 +50,20 @@ FILE_CONTENTS
 
     # Should get email with the most recent commit about
     # myfile.rb, which has no copyright notice.
-    assert mail_out.include?(last_commit_sha)
-    assert mail_out.include?("myfile.rb")
+    assert mail_out.include?(last_commit_sha),
+      "Mail message must include latest SHA!"
+    assert mail_out.include?("myfile.rb"),
+      "Mail message must mention myfile.rb!"
+  end
+
+  def test_copyright_no_problem
+    add_hook("child_repo", "post-commit", TEST_HOOK_BODY_1)
+
+    new_commit("child_repo", "myfile.rb", <<FILE_CONTENTS)
+# Copyright (C) 1941-2013 YoyoDyne, Inc.  All Rights Reserved.
+FILE_CONTENTS
+
+    assert !File.exist?(MAILER_FILE), "Copyright test must not send email!"
   end
 
 end
