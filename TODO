@@ -12,3 +12,5 @@
   and notifies (post-commit, post-receive) plus eventually vets
   rebases (pre-rebase).  Basically, there's a whole lifecycle here and
   right now it's all disconnected.
+
+* Document, document, document
