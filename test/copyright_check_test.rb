@@ -36,6 +36,7 @@ TEST
 
     # Remove test mail file
     Hook.shell! "rm -f #{MAILER_FILE}"
+    raise "Couldn't delete #{MAILER_FILE}!" if File.exist? MAILER_FILE
 
     # Create local parent and child repos with a single shared commit
     Dir.chdir REPOS_DIR
@@ -49,24 +50,24 @@ TEST
   def test_copyright_post_commit
     add_hook("child_repo", "post-commit", TEST_HOOK_BASIC)
 
-    new_commit("child_repo", "myfile.rb", <<FILE_CONTENTS)
+    new_commit("child_repo", "file_w_no_copy_notice.rb", <<FILE_CONTENTS)
 # No copyright notice!
 FILE_CONTENTS
 
     mail_out = File.read MAILER_FILE
 
     # Should get email with the most recent commit about
-    # myfile.rb, which has no copyright notice.
+    # file_w_no_copy_notice.rb, which has no copyright notice.
     assert mail_out.include?(last_commit_sha),
       "Mail message must include latest SHA!"
-    assert mail_out.include?("myfile.rb"),
-      "Mail message must mention myfile.rb!"
+    assert mail_out.include?("file_w_no_copy_notice.rb"),
+      "Mail message must mention file_w_no_copy_notice.rb!"
   end
 
   def test_copyright_no_send_option
     add_hook("child_repo", "post-commit", TEST_HOOK_NO_SEND)
 
-    new_commit("child_repo", "myfile.rb", <<FILE_CONTENTS)
+    new_commit("child_repo", "file_w_no_copy_notice_but_nosend.rb", <<FILE_CONTENTS)
 # No copyright notice!
 FILE_CONTENTS
 
@@ -77,7 +78,7 @@ FILE_CONTENTS
   def test_copyright_basic_correct
     add_hook("child_repo", "post-commit", TEST_HOOK_BASIC)
 
-    new_commit("child_repo", "myfile.rb", <<FILE_CONTENTS)
+    new_commit("child_repo", "correct_file.rb", <<FILE_CONTENTS)
 # Copyright (C) 1941-2013 YoyoDyne, Inc.  All Rights Reserved.
 FILE_CONTENTS
 
@@ -87,7 +88,7 @@ FILE_CONTENTS
   def test_copyright_no_first_year
     add_hook("child_repo", "post-commit", TEST_HOOK_BASIC)
 
-    new_commit("child_repo", "myfile.rb", <<FILE_CONTENTS)
+    new_commit("child_repo", "correct_file_single_year.rb", <<FILE_CONTENTS)
 # Copyright (C) 2013 YoyoDyne, Inc.  All Rights Reserved.
 FILE_CONTENTS
 
