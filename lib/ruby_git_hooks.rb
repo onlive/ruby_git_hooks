@@ -155,6 +155,17 @@ module RubyGitHooks
     #
     # @param hook_specs Array[Hook or Class or String] A list of hooks or hook classes
     def self.run(*hook_specs)
+      if @ruby_hit_hooks_has_run
+        STDERR.puts <<ERR
+In this version, you can't call .run more than once.  For now, please
+register your hooks individually and then call .run with no args, or
+else call .run with both as arguments.  This may be fixed in a future
+version.  Sorry!
+ERR
+        exit 1
+      end
+      @ruby_git_hooks_has_run = true
+
       initial_setup
 
       run_as_specific_githook
