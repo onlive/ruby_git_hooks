@@ -18,23 +18,15 @@ To use with a single Ruby installation:
 
     gem install ruby_git_hooks
 
-To use with RVM and all Rubies and gemsets:
-
-    rvm all do bash -l -c "rvm use @global && gem install ruby_git_hooks"
-
 Remember that ruby_git_hooks is invoked by Git -- it won't normally
 run with Bundler.  Not only do you not need to add it to your Gemfile,
 it probably won't help.  So make sure it's installed for every Ruby
 you use day-to-day from the command line.
 
-If you install a new Ruby then you'll need to install ruby_git_hooks
-in its global gemset as well.
-
 ## Usage
 
-Your new hook should have a Ruby shebang line.  You can require
-ruby_git_hooks and/or your hook on the shebang line, or in the text of
-the file.  You can use any hooks you want or define your own.
+Your new hook should have a Ruby shebang line (see below).  You can
+use the included hooks or define your own.
 
 The hook should be copied or symlinked to the appropriate location, of
 the form ".git/hooks/hook-name".
@@ -43,8 +35,9 @@ Here's an example: a pre-receive hook that uses the shebang line to
 require ruby_git_hooks/case_clash, then runs it.
 
 ~~~
-#!/usr/bin/env ruby -rruby_git_hooks/case_clash
+#!/usr/bin/env ruby
 # Put in .git/hooks/pre-receive and make it executable!
+require "ruby_git_hooks/case_clash"
 
 RubyGitHooks.run CaseClashHook.new
 ~~~
@@ -68,10 +61,10 @@ notify you by email.
 You can call register on multiple hooks and then run them:
 
 ~~~
-#!/usr/bin/env ruby -rruby_git_hooks
+#!/usr/bin/env ruby
 # Put in .git/hooks/post-receive and make it executable!
-require "case_clash"
-require "copyright_check"
+require "ruby_git_hooks/case_clash"
+require "ruby_git_hooks/copyright_check"
 
 RubyGitHooks.register CaseClashHook.new
 RubyGitHooks.register CopyrightCheck.new "domain" => "onlive.com",
@@ -92,10 +85,10 @@ run for each type of git hook -- your pre-commit and post-commit hooks
 may be different, for instance.
 
 ~~~
-#!/usr/bin/env ruby -rruby_git_hooks
+#!/usr/bin/env ruby
 # Put in .git/hooks/post-receive and make it executable!
-require "case_clash"
-require "copyright_check"
+require "ruby_git_hooks/case_clash"
+require "ruby_git_hooks/copyright_check"
 
 if RubyGitHooks.run_as_hook =~ /pre-/
   RubyGitHooks.run CaseClashHook.new
@@ -131,6 +124,43 @@ end
 
 RubyGitHooks.run TestHook.new
 ~~~
+
+### Using RubyGitHooks with RVM
+
+To use with RVM and all Rubies and gemsets:
+
+    rvm all do bash -l -c "rvm use @global && gem install ruby_git_hooks"
+
+If you install a new Ruby then you'll need to install ruby_git_hooks
+in its global gemset as well.
+
+If you're using Git 1.7.X rather than 1.8.X, Git will prepend /usr/bin
+to your path before running your hook -- you'll probably get the
+system Ruby by accident instead of the one you want.  You can upgrade
+to Git 1.8.X, or create an rvm wrapper and use that.
+
+To create an rvm wrapper:
+
+    rvm wrapper 1.9.3 githooks ruby
+
+You can give your own Ruby version instead of 1.9.3, and an optional
+gemset if you want the git hooks to use one.  Then see "Using
+RubyGitHooks with a Custom Shebang Line" below.
+
+### Using RubyGitHooks with a Custom Shebang Line
+
+If you don't want to use your current Ruby (with Git 1.8.X) or system
+Ruby (with Git 1.7.X), you'll need to set the shebang line for your
+hooks to the appropriate interpreter.
+
+If you're creating your own hook files, it's clear how to do this.
+
+But for RubyGitHooks' unit tests and generated hooks, you'll need to
+tell it what shebang line to use.
+
+Set it as an environment variable:
+
+    > export RUBYGITHOOKS_SHEBANG="/home/UserName/.rvm/bin/githooks_ruby"
 
 ## Troubleshooting
 
@@ -181,6 +211,9 @@ There's a good chance that ruby_git_hooks doesn't work on 1.8.7 at any
 given time.  This won't change.  Ruby 1.8.7 is ancient and as of June
 2013 will no longer even receive security fixes.  Please upgrade.
 Seriously, it's time.
+
+We *do* support systems like Macs with 1.8.7 as /usr/bin/ruby.  But
+you may need a custom shebang line with an rvm wrapper.
 
 ### Git 1.7
 
