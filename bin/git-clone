@@ -1,7 +1,55 @@
-#!/bin/bash
+#!/usr/bin/env ruby
 
 # This is used for git-clone and git-hclone.  Git-clone exists in case
 # the user overrides git() with a shell function to allow automatic
 # git-clone-with-hooks.
 
-echo $PATH
+# This script is run by Git, and can wind up running in system Ruby,
+# so it should be as 1.8-compatible and low on dependencies as
+# possible.  I will be so, so happy when Ruby 1.8 is effectively
+# dead.
+
+dashdash = ARGV.find_index("--")
+if dashdash
+  nondash = ARGV[(dashdash+1)..-1]
+else
+  # These are the documented git-clone options that take an additional
+  # piece of data afterward, such as "-o someorigin".
+  ARGS_WITH_ARGS = %w(-o -b -u --reference --separate-git-dir --depth)
+
+  nodash = []
+  for i=0; i < ARGV.length; i += 1
+    if ARGV[i][0] != "-"
+      nodash.push ARGV[i]
+    elsif ARGS_WITH_ARGS.include?(ARGV[i])
+      i += 1
+    end  # else ignore
+  end
+end
+
+if nodash.size > 1
+  dest_dir = nodash[-1]
+else
+  # Cloning from a URI
+  dest_dir = nodash[-1].split("/")[-1].gsub(/\.git$/, "")
+end
+
+system(File.join(`git --exec-path`.chomp, "git-clone"), *ARGV)
+if $?.success?
+  if dest_dir && File.exist?(dest_dir)
+    # TODO: preserve symlinks.
+    # TODO: set executable bit for anything matching a supported hook name.
+
+    # Note that we copy files that aren't names of hooks on purpose.
+    # It's totally kosher to have required or symlinked Ruby scripts
+    # and other stuff in the ~/.git_hooks dir.  It's also totally
+    # kosher to use RubyGitHooks support for git clone with hooks
+    # even if you don't use RGH for anything else.
+
+    system "cd #{dest_dir} && cp $HOME/.git_hooks/* .git/hooks/"
+  elsif dest_dir
+    STDERR.puts "Couldn't find directory #{dest_dir}.  Hooks not installed."
+  else
+    STDERR.puts "Couldn't determine destination directory.  Hooks not installed."
+  end
+end
