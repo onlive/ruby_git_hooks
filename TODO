@@ -6,8 +6,6 @@
 
 * "Bundle install on pull" hook
 
-* Some way of specifying only certain file extensions for hooks.
-
 * Wire up pre-rebase hooks to allow validations for multi-file
   criteria.  Then you can't rebase in a new file if it would violate
   the CaseClashHook, say.
@@ -20,3 +18,6 @@
   right now it's all disconnected.
 
 * Document, document, document
+
+* Register with default hook list and file types, and by default only
+  run if those match.
