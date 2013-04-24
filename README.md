@@ -169,6 +169,14 @@ tests of RubyGitHooks itself, but not later when using the hooks.
 You need the /usr/bin/env in it because your wrapper is a shellscript,
 and a shebang can't point to another shellscript on most systems.
 
+### API and Hook Documentation
+
+Documentation of individual hooks can be found in the YARD docs:
+
+    gem install yardoc redcarpet
+    yardoc
+    # Now open doc/_index.html in a browser of your choice
+
 ## Troubleshooting
 
 ### It Says It's Not Installed
@@ -240,8 +248,55 @@ We make a best effort to support it, but 1.8 is a smoother experience.
 4. Push to the branch (`git push origin my-new-feature`)
 5. Create new Pull Request
 
-## Future (Unimplemented)
+## Future (Unimplemented): New Hooks on Clone
 
-To create a single .git/hooks/ruby_git_hooks executable and symlink
-all supported git hooks to it, type "ruby_git_hooks" from your git
-root.  Right now there is only an OnLive-specific example of this.
+It's annoying that you don't automatically get hooks when you clone a
+new repo.  Often you want the same (or many of the same) hooks
+everywhere -- don't allow incomplete merges to be re-committed, for
+instance, or don't accept commit messages with non-ASCII characters.
+
+Those preferences are specific to you, but not specific to the repo.
+Clearly you should have a personal ~/.git_hooks/ directory containing
+your preferred hooks, which are then copied into each new repo you
+clone.  Ruby_git_hooks can help.
+
+### .bashrc
+
+You'll need to add a hack to your .bashrc to override "git clone"
+itself.  The hack below allows you to add an executable like
+"git-clone" to your path and have it be used in preference to the
+regular git-clone in `git --exec-path`.
+
+You can also skip this hack and always use "git hclone" instead of
+"git clone" if you want hooks installed.
+
+# NOTE: Stolen from http://stackoverflow.com/questions/2500586/setting-git-default-flags-on-commands
+# Git supports aliases defined in .gitconfig, but you cannot override Git
+# builtins (e.g. "git log") by putting an executable "git-log" somewhere in the
+# PATH. Also, git aliases are case-insensitive, but case can be useful to create
+# a negated command (gf = grep --files-with-matches; gF = grep
+# --files-without-match). As a workaround, translate "X" to "-x". 
+git()
+{
+    typeset -r gitAlias="git-$1"
+    if 'which' "$gitAlias" >/dev/null 2>&1; then
+        shift
+        "$gitAlias" "$@"
+    elif [[ "$1" =~ [A-Z] ]]; then
+        # Translate "X" to "-x" to enable aliases with uppercase letters.
+        translatedAlias=$(echo "$1" | sed -e 's/[A-Z]/-\l\0/g')
+        shift
+        "$(which git)" "$translatedAlias" "$@"
+    else
+        "$(which git)" "$@"
+    fi
+}
+
+### Project-Specific Hooks
+
+Want to have hooks that are specific to a given project?  No problem.
+Just create a post-clone hook in ~/.git_hooks that looks for a /.hooks
+directory in the newly-created repo and copies the hooks into
+~/.git_hooks.  Note that for now these hooks will then *override* your
+personal ones.  Eventually we'd prefer to merge them, but that's not
+easy...  Yet.
