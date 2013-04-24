@@ -18,20 +18,26 @@ else
   ARGS_WITH_ARGS = %w(-o -b -u --reference --separate-git-dir --depth)
 
   nodash = []
-  for i=0; i < ARGV.length; i += 1
+  i = 0
+  while i < ARGV.length
     if ARGV[i][0] != "-"
       nodash.push ARGV[i]
     elsif ARGS_WITH_ARGS.include?(ARGV[i])
       i += 1
     end  # else ignore
+
+    i += 1
   end
 end
 
 if nodash.size > 1
   dest_dir = nodash[-1]
-else
+elsif nodash.size == 1
   # Cloning from a URI
   dest_dir = nodash[-1].split("/")[-1].gsub(/\.git$/, "")
+else
+  # No args?  Huh.
+  dest_dir = nil
 end
 
 system(File.join(`git --exec-path`.chomp, "git-clone"), *ARGV)
