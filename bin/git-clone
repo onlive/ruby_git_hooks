@@ -1,0 +1,7 @@
+#!/bin/bash
+
+# This is used for git-clone and git-hclone.  Git-clone exists in case
+# the user overrides git() with a shell function to allow automatic
+# git-clone-with-hooks.
+
+echo $PATH
