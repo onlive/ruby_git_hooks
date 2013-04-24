@@ -270,6 +270,7 @@ regular git-clone in `git --exec-path`.
 You can also skip this hack and always use "git hclone" instead of
 "git clone" if you want hooks installed.
 
+~~~
 # NOTE: Stolen from http://stackoverflow.com/questions/2500586/setting-git-default-flags-on-commands
 # Git supports aliases defined in .gitconfig, but you cannot override Git
 # builtins (e.g. "git log") by putting an executable "git-log" somewhere in the
@@ -291,6 +292,7 @@ git()
         "$(which git)" "$@"
     fi
 }
+~~~
 
 ### Project-Specific Hooks
 
