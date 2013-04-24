@@ -9,7 +9,7 @@ require "ruby_git_hooks/version"
 
 module RubyGitHooks
   # This isn't all hook names, just the ones we already support.
-  CAN_FAIL_HOOKS = [ "pre-commit", "pre-receive" ]
+  CAN_FAIL_HOOKS = [ "pre-commit", "pre-receive", "commit-msg" ]
   NO_FAIL_HOOKS = [ "post-receive", "post-commit" ]
   HOOK_NAMES = CAN_FAIL_HOOKS + NO_FAIL_HOOKS
   # applypatch-msg, pre-applypatch, post-applypatch
@@ -45,11 +45,13 @@ module RubyGitHooks
 
       # All current commits (sometimes empty)
       attr_accessor :commits
+
+      attr_accessor :commit_message
     end
 
     # Instances of Hook delegate these methods to the class methods.
     HOOK_INFO = [ :files_changed, :file_contents, :file_diffs, :ls_files,
-                  :commits ]
+                  :commits, :commit_message ]
     HOOK_INFO.each do |info_method|
       define_method(info_method) do |*args, &block|
         Hook.send(info_method, *args, &block)
@@ -110,6 +112,21 @@ module RubyGitHooks
         end
 
         self.ls_files = Hook.shell!("git ls-files").split("\n")
+      },
+
+      "commit-msg" => proc {
+        self.files_changed = Hook.shell!("git diff --name-only --cached").split("\n")
+        self.file_contents = {}
+        self.file_diffs = {}
+        self.commits = []
+
+        files_changed.each do |file_changed|
+          file_diffs[file_changed] = Hook.shell!("git diff --cached #{file_changed}")
+          file_contents[file_changed] = File.read(file_changed)
+        end
+
+        self.ls_files = Hook.shell!("git ls-files").split("\n")
+        self.commit_message = File.read(ARGV[0])
       }
     }
     HOOK_TYPE_SETUP["post-receive"] = HOOK_TYPE_SETUP["pre-receive"]

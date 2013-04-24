@@ -24,7 +24,7 @@ TEST
     git_push
   end
 
-  def test_case_clash_pre_receive
+  def test_max_file_size_pre_receive
     add_hook("parent_repo.git", "pre-receive", TEST_HOOK_BODY)
 
     # Use dd to generate binary file with random contents
@@ -39,7 +39,7 @@ TEST
     end
   end
 
-  #def test_case_clash_pre_receive
+  #def test_case_clash_pre_commit
   #  add_hook("parent_repo.git", "pre-receive", TEST_HOOK_BODY)
   #end
 
