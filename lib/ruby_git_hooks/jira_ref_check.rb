@@ -29,6 +29,11 @@ class JiraReferenceCheckHook < RubyGitHooks::Hook
   end
 
   def check
+    if commit_message.length == 0
+      STDERR.puts "Commit message is zero length"
+      return false
+    end
+
     jira_tickets = commit_message.scan(JIRA_TICKET_REGEXP).map(&:strip)
     if jira_tickets.length == 0
       STDERR.puts "Commit message must refer to a jira ticket"
