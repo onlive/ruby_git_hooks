@@ -177,6 +177,23 @@ Documentation of individual hooks can be found in the YARD docs:
     yardoc
     # Now open doc/_index.html in a browser of your choice
 
+## Compatibility
+
+This library is tested primarily on Mac OS X with Git 1.8.X, RVM and
+Ruby 1.9.X.
+
+It should be compatible with Git 1.7.X, Ruby 2.0.X and other Unix-like
+systems.
+
+It is *not* expected to work on Ruby 1.8.X.  Please upgrade.
+
+It is *not* expected to work on Windows systems.  We would accept
+patches to help fix this, but I don't know how reasonable it will be.
+Git on Windows is often problematic.
+
+It should be usable on non-RVM systems, including those using other
+Ruby version managers like rbenv.
+
 ## Troubleshooting
 
 ### It Says It's Not Installed
