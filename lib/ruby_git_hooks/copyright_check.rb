@@ -79,7 +79,7 @@ class CopyrightCheckHook < RubyGitHooks::Hook
     unless @options["no_send"] || @options["via"] == "no_send"
       recipients.each do |name, email|
         ret = Pony.mail :to => email,
-                  :from => "#{@options["from"]}",
+                  :from => @options["from"],
                   :subject => @options["subject"],
                   :body => desc,
                   :via => @options["via"],
