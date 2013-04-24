@@ -128,12 +128,16 @@ RubyGitHooks.run TestHook.new
 
 ### Using RubyGitHooks with RVM
 
-To use with RVM and all Rubies and gemsets:
+To install ruby_git_hooks on RVM in all Rubies and gemsets:
 
     rvm all do bash -l -c "rvm use @global && gem install ruby_git_hooks"
 
 If you install a new Ruby then you'll need to install ruby_git_hooks
-in its global gemset as well.
+in its global gemset as well.  Also, you'll need to install any gems
+that your own personal hooks use, also in all gemsets.
+
+If you don't want to do that, you'll need to create an rvm wrapper and
+use it for the shebang line -- see below.
 
 If you're using Git 1.7.X rather than 1.8.X, Git will prepend /usr/bin
 to your path before running your hook -- you'll probably get the
