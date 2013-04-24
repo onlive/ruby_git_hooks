@@ -3,6 +3,7 @@
 # If you're not at OnLive, consider this a sample setup script.
 # If you *are* at OnLive, this is what we use as of April 2013.
 
+
 begin
   require "ruby_git_hooks"
 rescue LoadError
