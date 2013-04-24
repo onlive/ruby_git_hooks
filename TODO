@@ -4,6 +4,8 @@
 
 * "Illegal content" hook -- for catching incomplete merges (">>>>>>"), etc.
 
+* "Bundle install on pull" hook
+
 * Some way of specifying only certain file extensions for hooks.
 
 * Wire up pre-rebase hooks to allow validations for multi-file
