@@ -269,7 +269,7 @@ We make a best effort to support it, but 1.8 is a smoother experience.
 4. Push to the branch (`git push origin my-new-feature`)
 5. Create new Pull Request
 
-## Future (Unimplemented): New Hooks on Clone
+## New Hooks on Clone
 
 It's annoying that you don't automatically get hooks when you clone a
 new repo.  Often you want the same (or many of the same) hooks
@@ -277,14 +277,20 @@ everywhere -- don't allow incomplete merges to be re-committed, for
 instance, or don't accept commit messages with non-ASCII characters.
 
 Those preferences are specific to you, but not specific to the repo.
-Clearly you should have a personal ~/.git_hooks/ directory containing
+Clearly you should have a personal ~/.git_hooks directory containing
 your preferred hooks, which are then copied into each new repo you
-clone.  Ruby_git_hooks can help.
+clone.  Ruby_git_hooks does exactly that, but the commane is "git
+hclone" instead of "git clone" unless you override it.
 
-### .bashrc
+You can also call "git add-hooks" to refresh the project's hooks from
+your ~/.git_hooks directory, in case your hooks have changed or files
+may have been corrupted.  This also works if you cloned without hooks
+or otherwise have an existing repository without your hooks.
 
-You'll need to add a hack to your .bashrc to override "git clone"
-itself.  The hack below allows you to add an executable like
+### Using .bashrc to Override Git Clone
+
+To override "git clone" itself, you'll need a hack to your .bashrc
+The hack below allows you to add an executable like
 "git-clone" to your path and have it be used in preference to the
 regular git-clone in `git --exec-path`.
 
@@ -315,7 +321,7 @@ git()
 }
 ~~~
 
-### Project-Specific Hooks
+### Unimplemented, Future: Project-Specific Hooks
 
 Want to have hooks that are specific to a given project?  No problem.
 Just create a post-clone hook in ~/.git_hooks that looks for a /.hooks
