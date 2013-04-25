@@ -53,6 +53,7 @@ if $?.success?
     # even if you don't use RGH for anything else.
 
     system "cd #{dest_dir} && cp $HOME/.git_hooks/* .git/hooks/"
+    puts "Copied hooks into #{dest_dir}/.git/hooks."
   elsif dest_dir
     STDERR.puts "Couldn't find directory #{dest_dir}.  Hooks not installed."
   else
