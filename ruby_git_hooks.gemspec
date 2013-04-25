@@ -8,11 +8,14 @@ Gem::Specification.new do |spec|
   spec.version       = RubyGitHooks::VERSION
   spec.authors       = ["Noah Gibbs"]
   spec.email         = ["noah@onlive.com"]
-  spec.description   = %q{Ruby_git_hooks is a library to allow easy writing of git hooks
-                          in Ruby.  It abstracts away the differences between different
-                          hook interfaces and supplies implementations of some common
-                          Git hooks.}
-  spec.summary       = %q{Allows easy writing of git hooks in Ruby.}
+  spec.description   = <<DESC
+Ruby_git_hooks is a library to allow easy writing and installing of
+git hooks in Ruby.  It abstracts away the differences between
+different hook interfaces and supplies implementations of some common
+Git hooks.  It allows overriding "git clone" to automatically
+install your prefered hooks.
+DESC
+  spec.summary       = %q{DSL and manager for git hooks in Ruby.}
   spec.homepage      = ""
   spec.license       = "MIT"
 
@@ -23,6 +26,8 @@ Gem::Specification.new do |spec|
   spec.bindir        = "bin"
 
   spec.add_runtime_dependency "pony"  # For email
+  spec.add_runtime_dependency "rest-client"
+  spec.add_runtime_dependency "json"
 
   spec.add_development_dependency "bundler", "~> 1.3"
   spec.add_development_dependency "minitest"
