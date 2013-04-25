@@ -8,8 +8,8 @@ class NonAsciiCharactersCheckHook < RubyGitHooks::Hook
   end
 
   def check
-    if commit_message.length == 0
-      STDERR.puts "Commit message is zero length"
+    if !commit_message || commit_message.length == 0
+      STDERR.puts "Commit message is missing or empty!"
       return false
     end
 
