@@ -49,6 +49,7 @@ module RubyGitHooks
       # All current commits (sometimes empty)
       attr_accessor :commits
 
+      # Commit message for current commit
       attr_accessor :commit_message
     end
 
@@ -209,7 +210,7 @@ ERR
       end
 
       if CAN_FAIL_HOOKS.include?(@run_as_hook) && failed_hooks.size > 0
-        STDERR.puts "Hooks failed: #{failed_hooks.inspect}"
+        STDERR.puts "Hooks failed: #{failed_hooks}"
         STDERR.puts "Exiting!"
         exit 1
       end
