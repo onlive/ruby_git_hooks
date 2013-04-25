@@ -18,7 +18,7 @@ class CopyrightCheckHook < RubyGitHooks::Hook
                ]
 
   OPTIONS = [ "domain", "from", "subject", "via", "via_options", "intro",
-              "no_send" ]
+              "no_send", "company_check" ]
 
   Hook = RubyGitHooks::Hook
 
