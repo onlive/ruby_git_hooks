@@ -43,17 +43,8 @@ end
 system(File.join(`git --exec-path`.chomp, "git-clone"), *ARGV)
 if $?.success?
   if dest_dir && File.exist?(dest_dir)
-    # TODO: preserve symlinks.
-    # TODO: set executable bit for anything matching a supported hook name.
-
-    # Note that we copy files that aren't names of hooks on purpose.
-    # It's totally kosher to have required or symlinked Ruby scripts
-    # and other stuff in the ~/.git_hooks dir.  It's also totally
-    # kosher to use RubyGitHooks support for git clone with hooks
-    # even if you don't use RGH for anything else.
-
-    system "cd #{dest_dir} && cp $HOME/.git_hooks/* .git/hooks/"
-    puts "Copied hooks into #{dest_dir}/.git/hooks."
+    Dir.chdir dest_dir
+    system(File.join(File.dirname(__FILE__), "git-add-hooks"))
   elsif dest_dir
     STDERR.puts "Couldn't find directory #{dest_dir}.  Hooks not installed."
   else

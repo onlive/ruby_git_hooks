@@ -1,0 +1,31 @@
+#!/usr/bin/env ruby
+
+# Copy files from ~/.git_hooks into .git/hooks in the current repo.
+
+# This script is run by Git, and can wind up running in system Ruby,
+# so it should be as 1.8-compatible and low on dependencies as
+# possible.  I will be so, so happy when Ruby 1.8 is effectively
+# dead.
+
+# Note that we copy files that aren't names of hooks on purpose.
+# It's totally kosher to have required or symlinked Ruby scripts
+# and other stuff in the ~/.git_hooks dir.  It's also totally
+# kosher to use RubyGitHooks support for git clone with hooks
+# even if you don't use RGH for anything else.
+
+require "fileutils"
+
+until File.exist?(".git/hooks") || Dir.getwd == "/"
+  Dir.chdir ".."
+end
+
+raise "You're not in a git directory!" unless File.exist?(".git/hooks")
+
+Dir["#{ENV['HOME']}/.git_hooks/*"].each do |file|
+  puts "Installing hook file: #{file}"
+  dest = ".git/hooks/" + file.split("/")[-1]
+  FileUtils.copy_entry(file, dest, false, false, true)
+  system "chmod +x \"#{file}\""
+end
+
+puts "Copied hooks into #{Dir.getwd}/.git/hooks."
