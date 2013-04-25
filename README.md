@@ -24,6 +24,8 @@ every Ruby you use day-to-day from the command line.
 
 ## Usage
 
+## Writing Hook Scripts
+
 Your new hook script should have a Ruby shebang line (see below).  You
 can use the included hooks or define your own.
 
@@ -91,11 +93,11 @@ be different, for instance.
 require "ruby_git_hooks/case_clash"
 require "ruby_git_hooks/copyright_check"
 
-if RubyGitHooks.run_as_hook =~ /pre-/
+if RubyGitHooks.current_hook =~ /pre-/
   RubyGitHooks.run CaseClashHook.new
 end
 
-if RubyGitHooks.run_as_hook =~ /post-/
+if RubyGitHooks.current_hook =~ /post-/
   RubyGitHooks.run CopyrightCheck.new "domain" => "onlive.com",
        "from" => "OnLive Copyright Reminders",
        "via" => {
@@ -124,6 +126,58 @@ class TestHook < RubyGitHooks::Hook
 end
 
 RubyGitHooks.run TestHook.new
+~~~
+
+### New Hooks on Clone
+
+It's annoying that you don't automatically get hooks when you clone a
+new repo.  Often you want the same (or many of the same) hooks
+everywhere -- don't allow incomplete merges to be re-committed, for
+instance, or don't accept commit messages with non-ASCII characters.
+
+Those preferences are specific to you, but not specific to the repo.
+Clearly you should have a personal ~/.git_hooks directory containing
+your preferred hooks, which are then copied into each new repo you
+clone.  Ruby_git_hooks does exactly that, but the commane is "git
+hclone" instead of "git clone" unless you override it.
+
+You can also call "git add-hooks" to refresh the project's hooks from
+your ~/.git_hooks directory, in case your hooks have changed or files
+may have been corrupted.  This also works if you cloned without hooks
+or otherwise have an existing repository without your hooks.
+
+#### Using .bashrc to Override Git Clone
+
+To override "git clone" itself, you'll need a hack to your .bashrc
+The hack below allows you to add an executable like
+"git-clone" to your path and have it be used in preference to the
+regular git-clone in `git --exec-path`.
+
+You can also skip this hack and always use "git hclone" instead of
+"git clone" if you want hooks installed.
+
+~~~
+# NOTE: Stolen from http://stackoverflow.com/questions/2500586/setting-git-default-flags-on-commands
+# Git supports aliases defined in .gitconfig, but you cannot override Git
+# builtins (e.g. "git log") by putting an executable "git-log" somewhere in the
+# PATH. Also, git aliases are case-insensitive, but case can be useful to create
+# a negated command (gf = grep --files-with-matches; gF = grep
+# --files-without-match). As a workaround, translate "X" to "-x". 
+git()
+{
+    typeset -r gitAlias="git-$1"
+    if 'which' "$gitAlias" >/dev/null 2>&1; then
+        shift
+        "$gitAlias" "$@"
+    elif [[ "$1" =~ [A-Z] ]]; then
+        # Translate "X" to "-x" to enable aliases with uppercase letters.
+        translatedAlias=$(echo "$1" | sed -e 's/[A-Z]/-\l\0/g')
+        shift
+        "$(which git)" "$translatedAlias" "$@"
+    else
+        "$(which git)" "$@"
+    fi
+}
 ~~~
 
 ### Using RubyGitHooks with RVM
@@ -268,58 +322,6 @@ We make a best effort to support it, but 1.8 is a smoother experience.
 3. Commit your changes (`git commit -am 'Add some feature'`)
 4. Push to the branch (`git push origin my-new-feature`)
 5. Create new Pull Request
-
-## New Hooks on Clone
-
-It's annoying that you don't automatically get hooks when you clone a
-new repo.  Often you want the same (or many of the same) hooks
-everywhere -- don't allow incomplete merges to be re-committed, for
-instance, or don't accept commit messages with non-ASCII characters.
-
-Those preferences are specific to you, but not specific to the repo.
-Clearly you should have a personal ~/.git_hooks directory containing
-your preferred hooks, which are then copied into each new repo you
-clone.  Ruby_git_hooks does exactly that, but the commane is "git
-hclone" instead of "git clone" unless you override it.
-
-You can also call "git add-hooks" to refresh the project's hooks from
-your ~/.git_hooks directory, in case your hooks have changed or files
-may have been corrupted.  This also works if you cloned without hooks
-or otherwise have an existing repository without your hooks.
-
-### Using .bashrc to Override Git Clone
-
-To override "git clone" itself, you'll need a hack to your .bashrc
-The hack below allows you to add an executable like
-"git-clone" to your path and have it be used in preference to the
-regular git-clone in `git --exec-path`.
-
-You can also skip this hack and always use "git hclone" instead of
-"git clone" if you want hooks installed.
-
-~~~
-# NOTE: Stolen from http://stackoverflow.com/questions/2500586/setting-git-default-flags-on-commands
-# Git supports aliases defined in .gitconfig, but you cannot override Git
-# builtins (e.g. "git log") by putting an executable "git-log" somewhere in the
-# PATH. Also, git aliases are case-insensitive, but case can be useful to create
-# a negated command (gf = grep --files-with-matches; gF = grep
-# --files-without-match). As a workaround, translate "X" to "-x". 
-git()
-{
-    typeset -r gitAlias="git-$1"
-    if 'which' "$gitAlias" >/dev/null 2>&1; then
-        shift
-        "$gitAlias" "$@"
-    elif [[ "$1" =~ [A-Z] ]]; then
-        # Translate "X" to "-x" to enable aliases with uppercase letters.
-        translatedAlias=$(echo "$1" | sed -e 's/[A-Z]/-\l\0/g')
-        shift
-        "$(which git)" "$translatedAlias" "$@"
-    else
-        "$(which git)" "$@"
-    fi
-}
-~~~
 
 ### Unimplemented, Future: Project-Specific Hooks
 
