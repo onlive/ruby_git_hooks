@@ -87,7 +87,7 @@ class CopyrightCheckHook < RubyGitHooks::Hook
       end
     end
 
-    puts "Problems found in commit:\n#{desc}"
+    puts "Warnings for commit:\n#{desc}"
 
     # Block commit if installed as a pre-commit or pre-receive hook
     false
