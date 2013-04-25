@@ -21,3 +21,8 @@
 
 * Register with default hook list and file types, and by default only
   run if those match.
+
+* Add option registration to Hook parent class and do appropriate
+  string/symbol checking there.
+
+* Print message if a hook is registered but run is never called.
