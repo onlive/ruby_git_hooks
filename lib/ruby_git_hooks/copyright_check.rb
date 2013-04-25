@@ -48,16 +48,19 @@ class CopyrightCheckHook < RubyGitHooks::Hook
       next unless EXTENSIONS.include?(extension)
 
       if file_contents[filename] =~ COPYRIGHT_REGEXP
+        parsed_cur_year = $~["cur_year"]
+        parsed_company = $~["company"]
+
+        unless parsed_cur_year == cur_year
+          outdated_notice << filename
+        end
+
         # If there is a "company_check" option, either a string
         # or regexp, make sure that the detected company name
         # matches it.
         if @options["company_check"] &&
-            !(@options["company_check"][$~["company"]])
+            !(parsed_company[@options["company_check"]])
           outdated_company << filename
-        end
-
-        unless $~["cur_year"] == cur_year
-          outdated_notice << filename
         end
       else
         no_notice << filename

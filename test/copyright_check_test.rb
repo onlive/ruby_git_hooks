@@ -23,6 +23,23 @@ RubyGitHooks.register CopyrightCheckHook.new("domain" => "onlive.com",
 RubyGitHooks.run
 TEST
 
+  TEST_HOOK_COMPANY = <<TEST
+#{RubyGitHooks.shebang}
+require "ruby_git_hooks/copyright_check"
+
+RubyGitHooks.register CopyrightCheckHook.new("domain" => "onlive.com",
+  "from" => "Copyright Enforcement <noreply@onlive.com>",
+  "company_check" => /YoYoDyne (Industries)?/i,
+  "via" => :sendmail,
+  "via_options" => {
+    :location => #{FAKE_MAILER.inspect},
+    :arguments => '#{MAILER_FILE.inspect}'
+  }
+)
+
+RubyGitHooks.run
+TEST
+
   TEST_HOOK_NO_SEND = <<TEST
 #{RubyGitHooks.shebang}
 require "ruby_git_hooks/copyright_check"
@@ -83,6 +100,26 @@ FILE_CONTENTS
 FILE_CONTENTS
 
     assert !File.exist?(MAILER_FILE), "Copyright test must not send email!"
+  end
+
+  def test_copyright_company_correct
+    add_hook("child_repo", "post-commit", TEST_HOOK_COMPANY)
+
+    new_commit("child_repo", "correct_file.rb", <<FILE_CONTENTS)
+# Copyright (C) 1941-2013 YoyoDyne Industries  All Rights Reserved.
+FILE_CONTENTS
+
+    assert !File.exist?(MAILER_FILE), "Copyright test must not send email!"
+  end
+
+  def test_copyright_company_incorrect
+    add_hook("child_repo", "post-commit", TEST_HOOK_COMPANY)
+
+    new_commit("child_repo", "correct_file.rb", <<FILE_CONTENTS)
+# Copyright (C) 1941-2013 YoyoWrong  All Rights Reserved.
+FILE_CONTENTS
+
+    assert File.exist?(MAILER_FILE), "Must email about wrong company name!"
   end
 
   def test_copyright_no_first_year
