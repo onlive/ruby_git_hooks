@@ -31,6 +31,9 @@ module RubyGitHooks
       # What git hook is being run
       attr_reader :run_as_hook
 
+      # Whether .run has ever been called
+      attr_reader :has_run
+
       # Array of what files were changed
       attr_accessor :files_changed
 
@@ -132,6 +135,8 @@ module RubyGitHooks
     HOOK_TYPE_SETUP["post-receive"] = HOOK_TYPE_SETUP["pre-receive"]
 
     def self.initial_setup
+      return if @run_from
+
       @run_from = Dir.getwd
       @run_as = $0
     end
@@ -172,7 +177,7 @@ module RubyGitHooks
     #
     # @param hook_specs Array[Hook or Class or String] A list of hooks or hook classes
     def self.run(*hook_specs)
-      if @ruby_hit_hooks_has_run
+      if @has_run
         STDERR.puts <<ERR
 In this version, you can't call .run more than once.  For now, please
 register your hooks individually and then call .run with no args, or
@@ -181,7 +186,7 @@ version.  Sorry!
 ERR
         exit 1
       end
-      @ruby_git_hooks_has_run = true
+      @has_run = true
 
       initial_setup
 
@@ -211,6 +216,10 @@ ERR
     end
 
     def self.run_as_specific_githook
+      return if @run_as_hook  # Already did this
+
+      self.initial_setup  # Might have already done this
+
       if ARGV.include? "--hook"
         idx = ARGV.find_index "--hook"
         @run_as_hook = ARGV[idx + 1]
@@ -236,6 +245,13 @@ ERR
       @registered_hooks ||= {}
       @registered_hooks[hook.class.name] ||= []
       @registered_hooks[hook.class.name].push hook
+
+      # Figure out when to set this up...
+      #at_exit do
+      #  unless RubyGitHooks::Hook.has_run
+      #    STDERR.puts "No call to RubyGitHooks.run happened, so no hooks ran!"
+      #  end
+      #end
     end
 
     # TODO: This should capture both output channels,
@@ -265,6 +281,11 @@ ERR
 
   def self.shebang
     ENV['RUBYGITHOOKS_SHEBANG']
+  end
+
+  def self.current_hook
+    RubyGitHooks::Hook.run_as_specific_githook
+    RubyGitHooks::Hook.run_as_hook
   end
 end
 
