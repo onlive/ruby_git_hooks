@@ -12,17 +12,22 @@
 
 * Document built-in hooks like CopyrightCheck
 
-* Add base hook class for a hook that checks (pre-commit, pre-receive)
-  and notifies (post-commit, post-receive) plus eventually vets
-  rebases (pre-rebase).  Basically, there's a whole lifecycle here and
-  right now it's all disconnected.
-
 * Document, document, document
 
-* Register with default hook list and file types, and by default only
-  run if those match.
+* A hook should have default hook types and file extensions and
+  git-hook names, and should only run if those match -- or if
+  registered with an overrriding git-hook name or file type.
 
 * Add option registration to Hook parent class and do appropriate
   string/symbol checking there.
 
 * Print message if a hook is registered but run is never called.
+
+* Have a simple way to "forward" to another file.  That is, save the
+  arguments and STDIN and call another file with the same arguments
+  and same STDIN.  That would make it easy to have a "pre-commit.d"
+  directory and automatically call to every executable in that
+  directory matching "pre-commit" in the filename.  Then you could
+  easily combine multiple hooks -- for instance, the cloner's personal
+  hooks, the workplace's at-work hooks and the project's supplied
+  hooks.  Wouldn't always be a good idea, of course.
