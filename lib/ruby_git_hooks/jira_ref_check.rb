@@ -71,7 +71,7 @@ class JiraReferenceCheckHook < RubyGitHooks::Hook
         if $!.http_code == 401
           STDERR.puts "You're not authorized on this server!"
           STDERR.puts "Please set your username and password correctly."
-          break
+          return false
         elsif $!.http_code == 404
           # Nope, not a valid issue.  Keep trying
         elsif $!.http_code == 407
