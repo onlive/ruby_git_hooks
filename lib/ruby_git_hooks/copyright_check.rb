@@ -127,7 +127,7 @@ DESCRIPTION
 
     if outdated_company.size > 0
       description.concat <<DESCRIPTION
-The following files do not properly list "OL2, Inc." as the holder of copyright:
+The following files do not properly list your company as the holder of copyright:
 
   #{outdated_company.join("\n  ")}
 
