@@ -96,6 +96,8 @@ class JiraReferenceCheckHook < RubyGitHooks::Hook
     end
 
     # Getting this far means all tickets were 404s, generally.
+    # or only closed JIRA tickets were found (and reported)
+    STDERR.puts "Commit message must refer to a valid jira ticket"
     false
   end
 
