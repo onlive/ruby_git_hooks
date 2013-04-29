@@ -1,3 +1,5 @@
+# Copyright (C) 2013 OL2, Inc.  All Rights Reserved.
+
 require "ruby_git_hooks"
 
 require "rest-client"
@@ -9,7 +11,7 @@ require "json"
 class JiraReferenceCheckHook < RubyGitHooks::Hook
   Hook = RubyGitHooks::Hook
 
-  JIRA_TICKET_REGEXP = /(?:\s|^)[A-Z]{3,10}-\d{1,6}(?:\s|$)/
+  JIRA_TICKET_REGEXP = /(?:\W|^)[A-Z]{3,10}-\d{1,6}(?:\W|$)/
 
   OPTIONS = [ "protocol", "host", "username", "password", "api_path" ]
 
