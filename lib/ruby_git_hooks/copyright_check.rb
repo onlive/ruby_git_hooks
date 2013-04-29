@@ -1,7 +1,5 @@
 require "ruby_git_hooks"
 
-require "pony"
-
 class CopyrightCheckHook < RubyGitHooks::Hook
   COPYRIGHT_REGEXP = /Copyright\s+\(C\)\s*(?<pre_year>.*)-?(?<cur_year>\d{4})\s+(?<company>.+)\s+all rights reserved\.?/i
 
@@ -80,7 +78,9 @@ class CopyrightCheckHook < RubyGitHooks::Hook
     end
 
     unless @options["no_send"] || @options["via"] == "no_send"
-      recipients.each do |name, email|
+        require "pony"  # wait until we need it
+                        # NOTE: Pony breaks on Windows so don't use this option in Windows.
+        recipients.each do |name, email|
         ret = Pony.mail :to => email,
                   :from => @options["from"],
                   :subject => @options["subject"],
