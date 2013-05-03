@@ -231,7 +231,7 @@ and a shebang can't point to another shellscript on most systems.
 
 Documentation of individual hooks can be found in the YARD docs:
 
-    gem install yardoc redcarpet
+    gem install yard redcarpet
     yardoc
     # Now open doc/_index.html in a browser of your choice
 
