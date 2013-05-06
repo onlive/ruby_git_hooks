@@ -46,7 +46,7 @@ TEST
     # Should reject w/ pre-commit hook
     # TODO: check error more specifically
     assert_raises RuntimeError do
-      Hook.shell!("cd child_repo && git commit -m 'Message'")
+      Hook.shell!("cd child_repo && git commit -m \"Message\"")
     end
   end
 

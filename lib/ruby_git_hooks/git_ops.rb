@@ -41,10 +41,9 @@ module RubyGitHooks::GitOps
       File.open(File.join(repo_name, filename), "w") do |f|
         f.write(contents)
       end
-
     end
 
-    Hook.shell! "cd #{repo_name} && git add #{filename} && git commit -m '#{commit_message}'"
+    Hook.shell! "cd #{repo_name} && git add #{filename} && git commit -m \"#{commit_message}\""
   end
 
   def new_single_file_commit(repo_name = "child_repo", contents = "Single-file commit")

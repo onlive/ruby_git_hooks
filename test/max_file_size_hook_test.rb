@@ -26,10 +26,15 @@ TEST
 
   def test_max_file_size_pre_receive
     add_hook("parent_repo.git", "pre-receive", TEST_HOOK_BODY)
-
-    # Use dd to generate binary file with random contents
-    system("dd if=/dev/urandom of=child_repo/BigFile.log bs=120000 count=1")
-
+    filename = "#{REPOS_DIR}/child_repo/BigFile.log"   
+    puts "**** about to write #{filename} ******"
+       
+   File.open("filename", "w") do |f|
+      alphanum =  [('a'..'z'),('A'..'Z'),('0'..'9')].map{|i| i.to_a}.flatten
+      string  =  (0...120000).map{ alphanum[rand(alphanum.length)] }.join
+      f.write(string)
+      puts "**** wrote big file ******"
+    end
     new_commit "child_repo", "BigFile.log", nil
 
     # Should reject w/ pre-commit hook
@@ -38,6 +43,7 @@ TEST
       git_push
     end
   end
+  
 
   #def test_case_clash_pre_commit
   #  add_hook("parent_repo.git", "pre-receive", TEST_HOOK_BODY)

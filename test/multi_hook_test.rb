@@ -1,7 +1,6 @@
 require "test_helper"
 
 require "minitest/autorun"
-require "pony"
 
 class CopyrightCheckHookTest < HookTestCase
   REPOS_DIR = File.expand_path File.join(File.dirname(__FILE__), "repos")

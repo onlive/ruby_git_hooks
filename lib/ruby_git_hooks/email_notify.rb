@@ -1,5 +1,4 @@
 require "ruby_git_hooks"
-require "pony"
 
 class EmailNotifyHook < RubyGitHooks::Hook
   LEGAL_OPTIONS = [ "no_send", "via", "via_options", "max_lines", "recipients" ]
@@ -29,6 +28,8 @@ class EmailNotifyHook < RubyGitHooks::Hook
     recipients = @options.recipients.split /,|;/
 
     unless @options["no_send"] || @options["via"] == "no_send"
+      require "pony"
+      
       recipients.each do |name, email|
         ret = Pony.mail :to => email,
                   :from => @options["from"],
