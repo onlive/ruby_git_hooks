@@ -55,11 +55,18 @@ module RubyGitHooks::GitOps
 
     @single_file_counter += 1
   end
+    system("git mv child_repo/file_to_rename child_repo/renamed_file")
 
   def git_delete(repo_name="child_repo", filename="file_to_delete")  
     # filename is a file that has already been added and commited to the repo
     Hook.shell! "cd #{repo_name} && git rm #{filename}"
   end
+  
+  def git_rename(repo_name="child_repo", filename="file_to_rename", new_filename)  
+    # filename is a file that has already been added and commited to the repo
+    Hook.shell! "cd #{repo_name} && git mv #{filename} #{new_filename}"
+  end
+
 
   def last_commit_sha(repo_name = "child_repo")
     Hook.shell!("cd #{repo_name} && git log -n 1 --format=%H").chomp

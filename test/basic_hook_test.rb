@@ -79,11 +79,11 @@ HOOK
     def test_pre_commit_with_rename
     add_hook("child_repo", "pre-commit", TEST_HOOK_BODY)
     new_commit "child_repo", "file_to_rename"
-    system("mv file_to_rename renamed_file")
+    git_rename "child_repo", "file_to_rename", "renamed_file"
     new_commit "child_repo", "renamed_file", nil, "Renamed file"
 
     assert File.exist?(TEST_PATH), "Test pre-receive hook didn't run!"
-    assert File.read(TEST_PATH).include?('"file_to_delete"=>""'),
+    assert File.read(TEST_PATH).include?('"file_to_rename"=>""'),
       "File not deleted properly"
 
   end
