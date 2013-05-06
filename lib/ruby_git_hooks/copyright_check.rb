@@ -29,7 +29,7 @@ class CopyrightCheckHook < RubyGitHooks::Hook
     @options["domain"] ||= "mydomain.com"
     @options["from"] ||= "Copyright Cop <noreply@#{@options["domain"]}>"
     @options["subject"] ||= "Copyright Your Files, Please!"
-    @options["via"] ||= "sendmail"
+    @options["via"] ||= "no_send"
     @options["via_options"] ||= {}
   end
 
@@ -72,7 +72,7 @@ class CopyrightCheckHook < RubyGitHooks::Hook
 
     recipients = {}
     self.commits.each do |commit|
-      author = Hook.shell!("git log -n 1 --pretty=format:'%aE %aN' #{commit}")
+      author = Hook.shell!("git log -n 1 --pretty=format:\"%aE %aN\" #{commit}")
       email, name = author.chomp.split(" ", 2)
       recipients[name] = email
     end
