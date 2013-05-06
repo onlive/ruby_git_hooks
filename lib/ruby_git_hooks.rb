@@ -7,6 +7,8 @@ require "ruby_git_hooks/version"
 
 # TODO: wrap git calls in some saner way.  Grit would be saner than this.
 
+# TODO: store file status in addition to names of files_changed
+
 module RubyGitHooks
   # This isn't all hook names, just the ones we already support.
   CAN_FAIL_HOOKS = [ "pre-commit", "pre-receive", "commit-msg" ]
@@ -77,10 +79,13 @@ module RubyGitHooks
         self.file_contents = {}
         self.file_diffs = {}
         changes.each do |base, commit, ref|
-          self.files_changed += Hook.shell!("git diff --name-only #{base}..#{commit}").split("\n")
-          files_changed.each do |file_changed|
-            file_contents[file_changed] = Hook.shell!("git show #{commit}:#{file_changed}")
+          files_with_status = Hook.shell!("git diff --name-status #{base}..#{commit}").split("\n")
+          files_with_status.each do |f|
+            status, file_changed = f.scan(/([ACDMRTUXB])\s+(\S+)$/).flatten
+            self.files_changed << file_changed
+
             file_diffs[file_changed] = Hook.shell!("git log -p #{commit} -- #{file_changed}")
+            file_contents[file_changed] = status == "D"? "": Hook.shell!("git show #{commit}:#{file_changed}")
           end
         end
 
@@ -88,46 +93,60 @@ module RubyGitHooks
       },
 
       "pre-commit" => proc {
-        self.files_changed = Hook.shell!("git diff --name-only --cached").split("\n")
+        files_with_status = Hook.shell!("git diff --name-status --cached").split("\n")
+
+        self.files_changed = []
         self.file_contents = {}
         self.file_diffs = {}
         self.commits = []
 
-        files_changed.each do |file_changed|
-          file_diffs[file_changed] = Hook.shell!("git diff --cached #{file_changed}")
-          file_contents[file_changed] = File.read(file_changed)
+        files_with_status.each do |f|
+          status, file_changed = f.scan(/([ACDMRTUXB])\s+(\S+)$/).flatten
+          self.files_changed << file_changed
+         
+          file_diffs[file_changed] = Hook.shell!("git diff --cached -- #{file_changed}")          
+          file_contents[file_changed] = status == "D"? "": Hook.shell!("git show :#{file_changed}")
         end
 
         self.ls_files = Hook.shell!("git ls-files").split("\n")
       },
 
       "post-commit" => proc {
-        last_commit_files = Hook.shell!("git log --oneline --name-only -1")
-        # Split, cut off leading line to get actual files.
-        self.files_changed = last_commit_files.split("\n")[1..-1]
+        last_commit_files = Hook.shell!("git log --oneline --name-status -1")
+        # Split, cut off leading line to get actual files with status
+        files_with_status = last_commit_files.split("\n")[1..-1]
 
+        self.files_changed = []
         self.commits = [ Hook.shell!("git log -n 1 --pretty=format:%H").chomp ]
         self.file_contents = {}
         self.file_diffs = {}
 
-        files_changed.each do |file_changed|
-          file_diffs[file_changed] = Hook.shell!("git log --oneline -p HEAD~..HEAD #{file_changed}")
-          file_contents[file_changed] = File.read(file_changed)
+        files_with_status.each do |f|
+          status, file_changed = f.scan(/([ACDMRTUXB])\s+(\S+)$/).flatten
+          self.files_changed << file_changed
+ 
+          file_diffs[file_changed] = Hook.shell!("git log --oneline -p HEAD~..HEAD -- #{file_changed}")
+          file_contents[file_changed] = status == "D"? "": Hook.shell!("git show :#{file_changed}")
         end
 
         self.ls_files = Hook.shell!("git ls-files").split("\n")
       },
 
       "commit-msg" => proc {
-        self.files_changed = Hook.shell!("git diff --name-only --cached").split("\n")
+        files_with_status = Hook.shell!("git diff --name-status --cached").split("\n")
+       
+        self.files_changed = []
         self.file_contents = {}
         self.file_diffs = {}
         self.commits = []
 
-        files_changed.each do |file_changed|
-          file_diffs[file_changed] = Hook.shell!("git diff --cached #{file_changed}")
-          file_contents[file_changed] = File.read(file_changed)
-        end
+        files_with_status.each do |f|
+          status, file_changed = f.scan(/([ACDMRTUXB])\s+(\S+)$/).flatten
+          self.files_changed << file_changed
+
+          file_diffs[file_changed] = Hook.shell!("git diff --cached -- #{file_changed}")
+          file_contents[file_changed] = status == "D"? "": Hook.shell!("git show :#{file_changed}")
+       end
 
         self.ls_files = Hook.shell!("git ls-files").split("\n")
         self.commit_message = File.read(ARGV[0])
