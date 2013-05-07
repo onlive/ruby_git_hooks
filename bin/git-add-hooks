@@ -13,7 +13,34 @@
 # kosher to use RubyGitHooks support for git clone with hooks
 # even if you don't use RGH for anything else.
 
+# When the system we are running on doesn't support symlinks,
+# we turn the symlinks into wrapper scripts (for Windows, etc)
+
 require "fileutils"
+ 
+def system_supports_symlinks
+  # if we're on windows we won't recognize symlinks
+  # TO DO: we shouldn't test until we encounter one, but only test once)
+  begin
+    File.readlink("any file") 
+  rescue NotImplementedError
+     puts "Your system does not support symbolic links."
+     return false
+  rescue
+    # just ignore any other errors
+  end
+  return true
+end
+
+def is_symlink(file)
+  # is this file supposed to be a symbolic link?
+  # if so it will contain just the name of the file it should be linked to.
+  # We could just read in part of the file if it's a longer file.
+  # Is it safe to just read the first line and check that?
+  contents = File.read(file) rescue nil
+  m = contents && contents.match(/\A\s*(\w*[\.]?\w*)\s*\z/)
+  return m && m[1]
+end
 
 until File.exist?(".git/hooks") || Dir.getwd == "/"
   Dir.chdir ".."
@@ -21,11 +48,24 @@ end
 
 raise "You're not in a git directory!" unless File.exist?(".git/hooks")
 
-Dir["#{ENV['HOME']}/.git_hooks/*"].each do |file|
-  puts "Installing hook file: #{file}"
-  dest = ".git/hooks/" + file.split("/")[-1]
-  FileUtils.copy_entry(file, dest, false, false, true)
-  system "chmod +x \"#{file}\""
+has_sym = system_supports_symlinks
+
+Dir["#{ENV['HOME']}/.git_hooks/*"].each do |file|  
+  system "chmod +x \"#{file}\""  
+  hook_name = file.split("/")[-1] #e.g. pre-commit
+  dest = ".git/hooks/" + hook_name
+  if !has_sym && (link_file = is_symlink(file))
+    puts "Installing shell wrapper for: #{file}"
+    File.open(dest, "w") do |f|
+      f.write("#!/bin/bash\n")
+      f.write("#{Dir.getwd}/.git/hooks/#{link_file} --hook #{hook_name} \"$@\"\n")
+    end
+    system "chmod +x \"#{dest}\""
+  else
+    # otherwise just copy the file.
+    puts "Installing hook file: #{file}"
+    FileUtils.copy_entry(file, dest, false, false, true)
+  end
 end
 
 puts "Copied hooks into #{Dir.getwd}/.git/hooks."
