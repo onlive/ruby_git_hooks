@@ -4,11 +4,12 @@ require "minitest/autorun"
 
 class MaxFileSizeHookTest < HookTestCase
   REPOS_DIR = File.expand_path File.join(File.dirname(__FILE__), "repos")
+  MAX_SIZE = 100000
   TEST_HOOK_BODY = <<TEST
 #{RubyGitHooks.shebang}
 require "ruby_git_hooks/max_file_size"
 
-RubyGitHooks.run MaxFileSizeHook.new(100000)
+RubyGitHooks.run MaxFileSizeHook.new(MAX_SIZE)
 TEST
 
   def setup
@@ -26,16 +27,14 @@ TEST
 
   def test_max_file_size_pre_receive
     add_hook("parent_repo.git", "pre-receive", TEST_HOOK_BODY)
-    filename = "#{REPOS_DIR}/child_repo/BigFile.log"   
-    puts "**** about to write #{filename} ******"
+    filename = "#{REPOS_DIR}/child_repo/BigFile.txt"   
        
-   File.open("filename", "w") do |f|
+   File.open(filename, "w") do |f|
       alphanum =  [('a'..'z'),('A'..'Z'),('0'..'9')].map{|i| i.to_a}.flatten
-      string  =  (0...120000).map{ alphanum[rand(alphanum.length)] }.join
+      string  =  (0...MAX_SIZE*2).map{ alphanum[rand(alphanum.length)] }.join
       f.write(string)
-      puts "**** wrote big file ******"
     end
-    new_commit "child_repo", "BigFile.log", nil
+    new_commit "child_repo", "BigFile.txt", nil
 
     # Should reject w/ pre-commit hook
     # TODO: check error more specifically
