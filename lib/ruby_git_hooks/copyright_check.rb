@@ -44,7 +44,7 @@ class CopyrightCheckHook < RubyGitHooks::Hook
     files_changed.each do |filename|
       extension = (filename.split(".") || [])[-1]
       next unless EXTENSIONS.include?(extension)
-
+      next if file_contents[filename] == ""  # for now this is how we recognize a deleted file.
       if file_contents[filename] =~ COPYRIGHT_REGEXP
         parsed_cur_year = $~["cur_year"]
         parsed_company = $~["company"]
