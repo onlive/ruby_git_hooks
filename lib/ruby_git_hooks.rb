@@ -230,6 +230,7 @@ ERR
 
       if CAN_FAIL_HOOKS.include?(@run_as_hook) && failed_hooks.size > 0
         STDERR.puts "Hooks failed: #{failed_hooks}"
+        STDERR.puts "Use git commit -t .git/COMMIT_EDITMSG to restore your commit message" if commit_message
         STDERR.puts "Exiting!"
         exit 1
       end
