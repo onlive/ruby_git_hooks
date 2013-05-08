@@ -130,6 +130,7 @@ module RubyGitHooks
         end
 
         self.ls_files = Hook.shell!("git ls-files").split("\n")
+        self.commit_message = Hook.shell!("git log -1 --pretty=%B")
       },
 
       "commit-msg" => proc {

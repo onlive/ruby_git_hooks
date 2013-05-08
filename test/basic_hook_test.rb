@@ -73,9 +73,8 @@ HOOK
     assert File.exist?(TEST_PATH), "Test pre-receive hook didn't run!"
     assert File.read(TEST_PATH).include?('"file_to_delete"=>""'),
       "File not deleted properly"
-
   end
-  
+
     def test_pre_commit_with_rename
     add_hook("child_repo", "pre-commit", TEST_HOOK_BODY)
     new_commit "child_repo", "file_to_rename"
@@ -85,7 +84,6 @@ HOOK
     assert File.exist?(TEST_PATH), "Test pre-receive hook didn't run!"
     assert File.read(TEST_PATH).include?('"file_to_rename"=>""'),
       "File not deleted properly"
-
   end
 
   def test_simple_pre_receive
@@ -115,7 +113,6 @@ HOOK
     assert File.exist?(TEST_PATH), "Test pre-receive hook didn't run!"
     assert File.read(TEST_PATH).include?('"file_to_delete"=>""'),
       "File deletion did not reach pre-receive hook!"
-
   end
 
   def test_commit_msg
@@ -123,6 +120,15 @@ HOOK
     new_commit "child_repo", "my_file", "Commit contents", "This is my commit message"
     assert File.exist?(TEST_PATH), "Test commit-msg hook didn't run!"
     assert File.read(TEST_PATH).include?("This is my commit message"),
-      "Commit message did not reach pre-receive hook"
+      "Commit message did not reach commit-msg hook"
   end
+
+  def test_post_commit_has_commit_msg
+    add_hook("child_repo", "post-commit", TEST_HOOK_COMMIT_MSG)
+    new_commit "child_repo", "my_file", "Commit contents", "This is my commit message"
+    assert File.exist?(TEST_PATH), "Test post-commit hook didn't run!"
+    assert File.read(TEST_PATH).include?("This is my commit message"),
+      "Commit message did not reach post-commit hook"
+  end
+
 end
