@@ -42,7 +42,7 @@ def is_symlink(file)
   return m && m[1]
 end
 
-until File.exist?(".git/hooks") || Dir.getwd == "/"
+until File.exist?(".git/hooks") || Dir.getwd =~ /\/$/
   Dir.chdir ".."
 end
 
