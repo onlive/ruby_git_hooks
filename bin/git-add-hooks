@@ -16,7 +16,11 @@
 # When the system we are running on doesn't support symlinks,
 # we turn the symlinks into wrapper scripts (for Windows, etc)
 
+# As a support for the user's specific installation (a kind of
+# install hooks hook) the file "install_hook" will be run, if present
+
 require "fileutils"
+INSTALL_HOOK_SCRIPT = "install_hook"
  
 def system_supports_symlinks
   # if we're on windows we won't recognize symlinks
@@ -53,8 +57,11 @@ has_sym = system_supports_symlinks
 Dir["#{ENV['HOME']}/.git_hooks/*"].each do |file|  
   system "chmod +x \"#{file}\""  
   hook_name = file.split("/")[-1] #e.g. pre-commit
-  dest = ".git/hooks/" + hook_name
-  if !has_sym && (link_file = is_symlink(file))
+  dest = ".git/hooks/" + hook_name 
+  if hook_name == INSTALL_HOOK_SCRIPT
+    puts "Running local install hook script."
+    system(file)  # don't copy the script, just run it.
+  elsif !has_sym && (link_file = is_symlink(file))
     puts "Installing shell wrapper for: #{file}"
     File.open(dest, "w") do |f|
       f.write("#!/bin/bash\n")
