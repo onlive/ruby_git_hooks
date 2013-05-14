@@ -20,7 +20,7 @@
 # install hooks hook) the file "install_hook" will be run, if present
 
 require "fileutils"
-INSTALL_HOOK_SCRIPT = "install_hook"
+INSTALL_HOOK_SCRIPT = "install-hook"
  
 def system_supports_symlinks
   # if we're on windows we won't recognize symlinks
@@ -59,7 +59,7 @@ Dir["#{ENV['HOME']}/.git_hooks/*"].each do |file|
   hook_name = file.split("/")[-1] #e.g. pre-commit
   dest = ".git/hooks/" + hook_name 
   if hook_name == INSTALL_HOOK_SCRIPT
-    puts "Running local install hook script."
+    puts "Running install-hook script."
     system(file)  # don't copy the script, just run it.
   elsif !has_sym && (link_file = is_symlink(file))
     puts "Installing shell wrapper for: #{file}"
