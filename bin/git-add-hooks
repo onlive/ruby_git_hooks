@@ -64,7 +64,8 @@ if File.exist?(hook_file)
   if `echo $0` =~ /\$0/
     # our ruby doesn't know about the shell and
     # won't respect the shebang (e.g. we're in windows)
-    result = system("ruby #{hook_file}")
+    ruby_cmd = "#{Config::CONFIG['bindir']}/#{Config::CONFIG['ruby_install_name']}"
+    result = system("#{ruby_cmd} #{hook_file}")
   else
     result = system(hook_file) # run the hook
   end
