@@ -17,10 +17,12 @@
 # we turn the symlinks into wrapper scripts (for Windows, etc)
 
 # As a support for the user's specific installation (a kind of
-# install hooks hook) the file "install_hook" will be run, if present
+# install hooks hook) the file "pre-install-hook" will be run, if present
+# if the pre-install-hook returns a non-zero error code, don't install
+# the other files.
 
 require "fileutils"
-INSTALL_HOOK_SCRIPT = "install-hook"
+INSTALL_HOOK_SCRIPT = "pre-install-hook"
  
 def system_supports_symlinks
   # if we're on windows we won't recognize symlinks
@@ -28,7 +30,7 @@ def system_supports_symlinks
   begin
     File.readlink("any file") 
   rescue NotImplementedError
-     puts "Your system does not support symbolic links."
+     puts "(Your system does not support symbolic links.)"
      return false
   rescue
     # just ignore any other errors
@@ -52,16 +54,31 @@ end
 
 raise "You're not in a git directory!" unless File.exist?(".git/hooks")
 
+source_dir = "#{ENV['HOME']}/.git_hooks"
+raise "There's no #{source_dir} directory." unless File.exist?(source_dir)
+
+# run pre-install-hook, if it exists
+hook_file = "#{source_dir}/#{INSTALL_HOOK_SCRIPT}"
+if File.exist?(hook_file)
+  puts "Running #{INSTALL_HOOK_SCRIPT} script."
+  if `echo $0` =~ /\$0/
+    # our ruby doesn't know about the shell and
+    # won't respect the shebang (e.g. we're in windows)
+    result = system("ruby #{hook_file}")
+  else
+    result = system(hook_file) # run the hook
+  end
+  exit unless result
+end
+
 has_sym = system_supports_symlinks
 
-Dir["#{ENV['HOME']}/.git_hooks/*"].each do |file|  
+Dir["#{source_dir}/*"].each do |file|  
   system "chmod +x \"#{file}\""  
   hook_name = file.split("/")[-1] #e.g. pre-commit
   dest = ".git/hooks/" + hook_name 
-  if hook_name == INSTALL_HOOK_SCRIPT
-    puts "Running install-hook script."
-    system(file)  # don't copy the script, just run it.
-  elsif !has_sym && (link_file = is_symlink(file))
+  next if hook_name == INSTALL_HOOK_SCRIPT   # don't copy the script
+  if !has_sym && (link_file = is_symlink(file))
     puts "Installing shell wrapper for: #{file}"
     File.open(dest, "w") do |f|
       f.write("#!/bin/bash\n")
