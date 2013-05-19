@@ -125,7 +125,7 @@ module RubyGitHooks
           status, file_changed = f.scan(/([ACDMRTUXB])\s+(\S+)$/).flatten
           self.files_changed << file_changed
  
-          file_diffs[file_changed] = Hook.shell!("git log --oneline -p HEAD~..HEAD -- #{file_changed}")
+          file_diffs[file_changed] = Hook.shell!("git log --oneline -p -1 -- #{file_changed}")
           file_contents[file_changed] = status == "D"? "": Hook.shell!("git show :#{file_changed}")
         end
 
@@ -231,7 +231,7 @@ ERR
 
       if CAN_FAIL_HOOKS.include?(@run_as_hook) && failed_hooks.size > 0
         STDERR.puts "Hooks failed: #{failed_hooks}"
-        STDERR.puts "Use 'git commit -t .git/COMMIT_EDITMSG' to restore your commit message" if commit_message
+        STDERR.puts "Use 'git commit -eF .git/COMMIT_EDITMSG' to restore your commit message" if commit_message
         STDERR.puts "Exiting!"
         exit 1
       end
