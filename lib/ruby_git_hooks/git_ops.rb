@@ -83,4 +83,9 @@ module RubyGitHooks::GitOps
   def rewind_one_commit(repo_name = "child_repo")
     Hook.shell! "cd #{repo_name} && git reset --hard HEAD~"
   end
+
+  def last_commit_message(repo_name = "child_repo")
+    Hook.shell!("cd #{repo_name} && git log -1").chomp
+  end
+
 end
