@@ -6,7 +6,7 @@ require "ruby_git_hooks"
 # the commit is accepted.
 class AddWatermarkCommitHook < RubyGitHooks::Hook
   
-  def initialize(mark = "\u{00020}")
+  def initialize(mark = "\u00a0")
     @watermark = mark
   end
 
