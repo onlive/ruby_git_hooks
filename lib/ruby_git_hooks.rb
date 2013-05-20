@@ -53,11 +53,14 @@ module RubyGitHooks
 
       # Commit message for current commit
       attr_accessor :commit_message
+
+      # Commit message file for current commit
+      attr_accessor :commit_message_file
     end
 
     # Instances of Hook delegate these methods to the class methods.
     HOOK_INFO = [ :files_changed, :file_contents, :file_diffs, :ls_files,
-                  :commits, :commit_message ]
+                  :commits, :commit_message, :commit_message_file ]
     HOOK_INFO.each do |info_method|
       define_method(info_method) do |*args, &block|
         Hook.send(info_method, *args, &block)
@@ -151,6 +154,7 @@ module RubyGitHooks
 
         self.ls_files = Hook.shell!("git ls-files").split("\n")
         self.commit_message = File.read(ARGV[0])
+        self.commit_message_file = ARGV[0]
       }
     }
     HOOK_TYPE_SETUP["post-receive"] = HOOK_TYPE_SETUP["pre-receive"]
