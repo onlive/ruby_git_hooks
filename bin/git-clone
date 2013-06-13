@@ -8,7 +8,6 @@
 # so it should be as 1.8-compatible and low on dependencies as
 # possible.  I will be so, so happy when Ruby 1.8 is effectively
 # dead.
-
 dashdash = ARGV.find_index("--")
 if dashdash
   nondash = ARGV[(dashdash+1)..-1]
@@ -30,6 +29,9 @@ else
   end
 end
 
+# allow to override with --nohooks
+nohooks = ARGV.delete("--nohooks") || ARGV.delete("--noHooks") || ARGV.delete("--no-hooks")
+
 if nodash.size > 1
   dest_dir = nodash[-1]
 elsif nodash.size == 1
@@ -42,7 +44,9 @@ end
 
 system(File.join(`git --exec-path`.chomp, "git-clone"), *ARGV)
 if $?.success?
-  if dest_dir && File.exist?(dest_dir)
+  if nohooks
+    STDERR.puts "Hooks not installed."
+  elsif dest_dir && File.exist?(dest_dir)
     Dir.chdir dest_dir
     system(File.join(File.dirname(__FILE__), "git-add-hooks"))
   elsif dest_dir
