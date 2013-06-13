@@ -2,9 +2,6 @@
 
 require "ruby_git_hooks"
 
-require "rest-client"
-require "json"
-
 # TODO: allow passing in list of legal issue statuses
 
 # Check that commit message has one or more valid Jira ticket references
