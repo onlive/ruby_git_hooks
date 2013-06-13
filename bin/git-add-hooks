@@ -48,11 +48,12 @@ def is_symlink(file)
   return m && m[1]
 end
 
-until File.exist?(".git/hooks") || Dir.getwd =~ /\/$/
+until File.exist?(".git") || Dir.getwd =~ /\/$/
   Dir.chdir ".."
 end
 
-raise "You're not in a git directory!" unless File.exist?(".git/hooks")
+raise "You're not in a git directory!" unless File.exist?(".git")
+Dir.mkdir(".git/hooks") unless File.exists?(".git/hooks")
 
 source_dir = "#{ENV['HOME']}/.git_hooks"
 raise "There's no #{source_dir} directory." unless File.exist?(source_dir)
