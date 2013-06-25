@@ -101,7 +101,7 @@ module RubyGitHooks
           end
         end
 
-        file_list_revision =  self.commits.last # can't just use HEAD - remote may be on branch with no HEAD
+        file_list_revision =  self.commits.first # can't just use HEAD - remote may be on branch with no HEAD
         self.ls_files = Hook.shell!("git ls-tree --full-tree --name-only -r #{file_list_revision}").split("\n")
         # TODO should store ls_files per commit and ls_files with branch name (in case commits on multiple branches)?
 
