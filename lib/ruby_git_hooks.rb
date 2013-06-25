@@ -81,8 +81,17 @@ module RubyGitHooks
         self.files_changed = []
         self.file_contents = {}
         self.file_diffs = {}
+
         changes.each do |base, commit, ref|
-          files_with_status = Hook.shell!("git diff --name-status #{base}..#{commit}").split("\n")
+          if base =~  /\A0+\z/
+            # if base is 000... (initial commit), then all files were added, and git diff won't work
+            files_with_status = Hook.shell!("git ls-tree --name-status -r #{commit}").split("\n")
+            # put the A at the front
+            files_with_status.map!{|filename| "A\t" + filename}
+          else
+            files_with_status = Hook.shell!("git diff --name-status #{base}..#{commit}").split("\n")
+          end
+
           files_with_status.each do |f|
             status, file_changed = f.scan(/([ACDMRTUXB])\s+(\S+)$/).flatten
             self.files_changed << file_changed
@@ -92,7 +101,10 @@ module RubyGitHooks
           end
         end
 
-        self.ls_files = Hook.shell!("git ls-tree --full-tree --name-only -r HEAD").split("\n")
+        file_list_revision =  self.commits.last # can't just use HEAD - remote may be on branch with no HEAD
+        self.ls_files = Hook.shell!("git ls-tree --full-tree --name-only -r #{file_list_revision}").split("\n")
+        # TODO should store ls_files per commit and ls_files with branch name (in case commits on multiple branches)?
+
       },
 
       "pre-commit" => proc {

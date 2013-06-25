@@ -41,7 +41,7 @@ end
 RubyGitHooks.run TestHook.new
 HOOK
 
-  def setup
+  def setup(do_first_commit = true)
     # Empty out the test repos dir
     Hook.shell! "rm -rf #{File.join(REPOS_DIR, "*")}"
 
@@ -50,8 +50,10 @@ HOOK
 
     new_bare_repo
     clone_repo
-    new_single_file_commit
-    git_push
+    if do_first_commit
+      new_single_file_commit
+      git_push
+    end
   end
 
   def test_simple_pre_commit
@@ -129,6 +131,11 @@ HOOK
     assert File.exist?(TEST_PATH), "Test post-commit hook didn't run!"
     assert File.read(TEST_PATH).include?("This is my commit message"),
       "Commit message did not reach post-commit hook"
+  end
+
+  def test_first_pre_receive
+      setup(false)  # don't do first commit
+      test_simple_pre_receive
   end
 
 end
