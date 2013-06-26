@@ -76,15 +76,17 @@ module RubyGitHooks
           base, commit, ref = line.strip.split
           changes.push [base, commit, ref]
         end
-        self.commits = changes.map { |c| c[1] }
+        self.commits = []
 
         self.files_changed = []
         self.file_contents = {}
         self.file_diffs = {}
 
         changes.each do |base, commit, ref|
+          no_base = false
           if base =~  /\A0+\z/
             # if base is 000... (initial commit), then all files were added, and git diff won't work
+            no_base = true
             files_with_status = Hook.shell!("git ls-tree --name-status -r #{commit}").split("\n")
             # put the A at the front
             files_with_status.map!{|filename| "A\t" + filename}
@@ -97,8 +99,11 @@ module RubyGitHooks
             self.files_changed << file_changed
 
             file_diffs[file_changed] = Hook.shell!("git log -p #{commit} -- #{file_changed}")
-            file_contents[file_changed] = status == "D"? "": Hook.shell!("git show #{commit}:#{file_changed}")
+            file_contents[file_changed] = status == "D" ? "" : Hook.shell!("git show #{commit}:#{file_changed}")
           end
+          commit_range  = no_base ? commit : "#{base}..#{commit}"
+          new_commits = Hook.shell!("git log --pretty=format:%H #{commit_range}").split("\n")
+          self.commits = self.commits | new_commits
         end
 
         file_list_revision =  self.commits.first # can't just use HEAD - remote may be on branch with no HEAD
