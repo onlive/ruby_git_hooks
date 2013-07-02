@@ -99,7 +99,15 @@ module RubyGitHooks
             self.files_changed << file_changed
 
             file_diffs[file_changed] = Hook.shell!("git log -p #{commit} -- #{file_changed}")
-            file_contents[file_changed] = status == "D" ? "" : Hook.shell!("git show #{commit}:#{file_changed}")
+            begin
+              file_contents[file_changed] = status == "D" ? "" : Hook.shell!("git show #{commit}:#{file_changed}")
+            rescue
+              # weird bug where some repos can't run the git show command even when it's not a deleted file.
+              # example: noah-gibbs/barkeep/test/fixtures/text_git_repo  I haven't figured out what's
+              # weird about it yet but this fails, so put in a hack for now.  May want to leave this since
+              # we'd rather continue without the changes than fail, right?
+              file_contents[file_changed] = ""
+            end
           end
           commit_range  = no_base ? commit : "#{base}..#{commit}"
           new_commits = Hook.shell!("git log --pretty=format:%H #{commit_range}").split("\n")
