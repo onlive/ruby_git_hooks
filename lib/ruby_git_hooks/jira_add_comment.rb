@@ -7,8 +7,15 @@ require "json"
 
 # TODO: allow passing in list of legal issue statuses
 
+# Called as a post-receive with a list of commits -
+# ideally the ruby_git_hooks framework would allow us to get each commit message from them
+# but for now we'll do it ourselves.
+
 # Check that commit message has one or more valid Jira ticket references
-# and add a comment to the jira ticket
+# and add a comment to the jira ticket(s)
+# Won't be able to reject the commit, just continue to the end and check everything
+# and report errors
+
 class JiraCommentAddHook < RubyGitHooks::Hook
   Hook = RubyGitHooks::Hook
 
@@ -36,70 +43,20 @@ class JiraCommentAddHook < RubyGitHooks::Hook
   end
 
   def check
-    if !commit_message || commit_message.length == 0
-      STDERR.puts "Commit message is missing or empty!"
-      return false
+    success = true  # assume we're going to get all the way through, but remember if we don't
+
+    if commits.empty? && commit_message && commit_message.length > 0  # we were called pre-commit
+      return check_one_commit_message(commit_message)
     end
+    # called with a list of commits to check, as post-receive.
 
-    jira_tickets = commit_message.scan(JIRA_TICKET_REGEXP).map(&:strip)
-    if jira_tickets.length == 0
-      STDERR.puts "Commit message must refer to a jira ticket"
-      return false
+    commits.each do |commit|
+
+      commit_message = RubyGitHooks::Hook.shell!("git log #{commit} -1 --pretty=%B")
+      puts "Checking #{commit[0..7]} #{commit_message}"
+      check_one_commit_message(commit_message)
     end
-
-    jira_tickets.each do |ticket|
-      begin
-        resp = RestClient.get build_uri(ticket)
-        hash = JSON.parse(resp)
-
-        # Grab the Jira bug status, or fall back to allowing
-        # if the format is unexpected.
-        status = hash["fields"]["status"]["name"] rescue "open"
-
-        if status.downcase == "closed"
-          puts "Issue #{ticket} is closed, not allowing."
-        else
-          # Bug was open, probably.  Allow it!
-          return true
-        end
-      rescue SocketError
-        STDERR.puts "SocketError finding '#{@options["host"]}': #{$!.inspect}"
-        STDERR.puts "Is '#{@options["host"]}' the right Jira hostname? "
-        STDERR.puts "I'm allowing this in case you're offline, but make sure"
-        STDERR.puts "your hostname is right, please!"
-        return true
-      rescue RestClient::Exception
-        if $!.http_code == 401
-          STDERR.puts "You're not authorized on this server!"
-          STDERR.puts "Please set your username and password correctly."
-          return false
-        elsif $!.http_code == 404
-          # Nope, not a valid issue.  Keep trying
-        elsif $!.http_code == 407
-          STDERR.puts "We don't support proxies to Jira yet!"
-          STDERR.puts "I'll give you the benefit of the doubt."
-          return true
-        elsif $!.http_code >= 500
-          STDERR.puts "Jira got a server error."
-          STDERR.puts "I'll give you the benefit of the doubt."
-          return true
-        else
-          STDERR.puts "Unexpected HTTP Error: #{$!.http_code}!"
-          return false
-        end
-
-      rescue
-        STDERR.puts "Unexpected exception: #{$!.inspect}!"
-        return false
-
-        # TODO: rescue DNS error, allow but nag
-      end
-    end
-
-    # Getting this far means all tickets were 404s, generally.
-    # or only closed JIRA tickets were found (and reported)
-    STDERR.puts "Commit message must refer to a valid jira ticket"
-    false
+    return true #
   end
 
   # Do not show password when converting to string
@@ -107,4 +64,78 @@ class JiraCommentAddHook < RubyGitHooks::Hook
     "<JiraCommentAddHook:#{object_id} #{@options.merge("password" => :redacted)}>"
   end
 
+  def check_one_commit_message(commit_message)
+    jira_tickets = commit_message.scan(JIRA_TICKET_REGEXP).map(&:strip)
+    if jira_tickets.length == 0
+      STDERR.puts "Commit message must refer to a jira ticket"
+      return false
+    end
+
+    success = false
+    jira_tickets.each do |ticket|
+      valid_ticket = check_for_valid_ticket(ticket)
+      if valid_ticket
+        add_comment(ticket)
+        success = true
+      end
+    end
+
+    STDERR.puts "Commit message must refer to a valid jira ticket" if !success
+
+    return success    # did we find any valid tickets?
+  end
+
+  def add_comment(ticket)
+    puts "ADDING COMMENT for ticket #{ticket}"
+  end
+
+  def check_for_valid_ticket(ticket)
+    begin
+      resp = RestClient.get build_uri(ticket)
+      hash = JSON.parse(resp)
+
+      # Grab the Jira bug status, or fall back to allowing
+      # if the format is unexpected.
+      status = hash["fields"]["status"]["name"] rescue "open"
+
+      if status.downcase == "closed"
+        puts "Issue #{ticket} is closed, not allowing."
+      else
+        # Bug was open, probably.  Allow it!
+        return true
+      end
+    rescue SocketError
+      STDERR.puts "SocketError finding '#{@options["host"]}': #{$!.inspect}"
+      STDERR.puts "Is '#{@options["host"]}' the right Jira hostname? "
+      STDERR.puts "I'm allowing this in case you're offline, but make sure"
+      STDERR.puts "your hostname is right, please!"
+      return true
+    rescue RestClient::Exception
+      if $!.http_code == 401
+        STDERR.puts "You're not authorized on this server!"
+        STDERR.puts "Please set your username and password correctly."
+        return false
+      elsif $!.http_code == 404
+        # Nope, not a valid issue.  Keep trying
+      elsif $!.http_code == 407
+        STDERR.puts "We don't support proxies to Jira yet!"
+        STDERR.puts "I'll give you the benefit of the doubt."
+        return true
+      elsif $!.http_code >= 500
+        STDERR.puts "Jira got a server error."
+        STDERR.puts "I'll give you the benefit of the doubt."
+        return true
+      else
+        STDERR.puts "Unexpected HTTP Error: #{$!.http_code}!"
+        return false
+      end
+
+    rescue
+      STDERR.puts "Unexpected exception: #{$!.inspect}!"
+      return false
+
+      # TODO: rescue DNS error, allow but nag
+    end
+    false # if we get to this point it's not a valid ticket
+  end
 end
