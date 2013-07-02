@@ -48,6 +48,14 @@ def is_symlink(file)
   return m && m[1]
 end
 
+# Hack to allow git-add-hooks to be called from outide the git directory
+# with the name of the git directory passed in.  Addresses the problem
+# of .rvmrc using a gemset that doesn't have rubygithooks and hence
+# doesn't have git add-hooks.
+if ARGV[0] && Dir.exist?(ARGV[0])
+  Dir.chdir(ARGV[0])
+end
+
 until File.exist?(".git") || Dir.getwd =~ /\/$/
   Dir.chdir ".."
 end
@@ -70,7 +78,12 @@ if File.exist?(hook_file)
   else
     result = system(hook_file) # run the hook
   end
-  exit unless result
+
+  if !result
+    puts "pre-install hook failed"
+    exit
+  end
+
 end
 
 has_sym = system_supports_symlinks
