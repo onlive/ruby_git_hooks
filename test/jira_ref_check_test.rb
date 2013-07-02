@@ -2,7 +2,6 @@ require "test_helper"
 require "ruby_git_hooks/jira_ref_check"
 
 require "minitest/autorun"
-require "rest-client"
 
 class JiraReferenceCheckHookTest < HookTestCase
   def setup
