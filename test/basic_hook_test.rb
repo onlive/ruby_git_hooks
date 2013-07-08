@@ -1,3 +1,5 @@
+# Copyright (C) 2013 OL2, Inc.  All Rights Reserved.
+
 require "test_helper"
 
 require "minitest/autorun"
@@ -72,7 +74,7 @@ HOOK
     git_delete "child_repo", "file_to_delete"
     git_commit "child_repo", "Deleted file_to_delete"
 
-    assert File.exist?(TEST_PATH), "Test pre-receive hook didn't run!"
+    assert File.exist?(TEST_PATH), "Test pre-commit hook didn't run!"
     assert File.read(TEST_PATH).include?('"file_to_delete"=>""'),
       "File not deleted properly"
   end
@@ -83,7 +85,7 @@ HOOK
     git_rename "child_repo", "file_to_rename", "renamed_file"
     new_commit "child_repo", "renamed_file", nil, "Renamed file"
 
-    assert File.exist?(TEST_PATH), "Test pre-receive hook didn't run!"
+    assert File.exist?(TEST_PATH), "Test pre-commit hook didn't run!"
     assert File.read(TEST_PATH).include?('"file_to_rename"=>""'),
       "File not deleted properly"
   end
