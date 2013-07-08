@@ -8,7 +8,7 @@ require "ruby_git_hooks"
 class JiraReferenceCheckHook < RubyGitHooks::Hook
   Hook = RubyGitHooks::Hook
 
-  JIRA_TICKET_REGEXP = /(?<=\W|^)[A-Z]{3,10}-\d{1,6}(?=\W|$)/
+  JIRA_TICKET_REGEXP = /(?<=\W|^)[A-Z]{2,10}-\d{1,6}(?=\W|$)/
   
   def initialize(options = {})
     # not using options now, but leave this here for backwards compatibility
