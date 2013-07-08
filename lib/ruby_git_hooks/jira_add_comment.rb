@@ -1,6 +1,7 @@
 # Copyright (C) 2013 OL2, Inc.  All Rights Reserved.
 
 require "ruby_git_hooks"
+require "ruby_git_hooks/jira_ref_check"
 
 require "rest-client"
 require "json"
@@ -16,10 +17,9 @@ require "json"
 # Won't be able to reject the commit, just continue to the end and check everything
 # and report errors
 
+
 class JiraCommentAddHook < RubyGitHooks::Hook
   Hook = RubyGitHooks::Hook
-
-  JIRA_TICKET_REGEXP = /(?<=\W|^)[A-Z]{3,10}-\d{1,6}(?=\W|$)/
 
   OPTIONS = [ "protocol", "host", "username", "password", "api_path" ]
 
@@ -70,7 +70,7 @@ class JiraCommentAddHook < RubyGitHooks::Hook
 
   def check_one_commit(commit, commit_message)
 
-    jira_tickets = commit_message.scan(JIRA_TICKET_REGEXP).map(&:strip)
+    jira_tickets = commit_message.scan(JiraReferenceCheckHook::JIRA_TICKET_REGEXP).map(&:strip)
     if jira_tickets.length == 0
       STDERR.puts "Commit message must refer to a jira ticket"
       return false
