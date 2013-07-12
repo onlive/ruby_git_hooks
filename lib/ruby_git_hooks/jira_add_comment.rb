@@ -21,7 +21,7 @@ require "json"
 class JiraCommentAddHook < RubyGitHooks::Hook
   Hook = RubyGitHooks::Hook
 
-  OPTIONS = [ "protocol", "host", "username", "password", "api_path" ]
+  OPTIONS = [ "protocol", "host", "username", "password", "api_path", "github"]
 
   def initialize(options = {})
     bad_options = options.keys - OPTIONS
@@ -36,6 +36,7 @@ class JiraCommentAddHook < RubyGitHooks::Hook
     @options["protocol"] ||= "https"
     @options["host"] ||= "jira"
     @options["api_path"] ||= "rest/api/latest/issue"
+    @options["github"] ||= "github.com"
   end
 
   def build_uri(ticket, command=nil)
@@ -43,6 +44,7 @@ class JiraCommentAddHook < RubyGitHooks::Hook
     uri = "#{uri}/#{command}" if command
     return uri
   end
+
 
   def check
     success = true  # assume we're going to get all the way through, but remember if we don't
@@ -56,7 +58,7 @@ class JiraCommentAddHook < RubyGitHooks::Hook
 
       options = {}
 
-      commit_message = RubyGitHooks::Hook.shell!("git log #{commit} -1 --pretty=%B")
+      commit_message = RubyGitHooks::Hook.shell!("git log #{commit} -1 --pretty=%B").rstrip
       puts "Checking #{commit[0..7]} #{commit_message}"
       check_one_commit(commit, commit_message )
     end
@@ -66,6 +68,80 @@ class JiraCommentAddHook < RubyGitHooks::Hook
   # Do not show password when converting to string
   def to_s
     "<JiraCommentAddHook:#{object_id} #{@options.merge("password" => :redacted)}>"
+  end
+
+
+  def repo_remote_path
+    remote_urls = RubyGitHooks::Hook.shell!("git remote -v").split
+    remote = remote_urls[1]  # ["origin", "git@github.onlive.com:Engineering/ruby_git_hooks.git", "fetch", ...]
+    uri = URI.parse(remote) rescue nil
+    if uri
+      #  "https://github.onlive.com/Engineering/ruby_git_hooks.git "
+      return uri.to_s.sub(/.git\z/, "")
+    else
+      # "git@github.onlive.com:Engineering/ruby_git_hooks.git"
+      # ?? Can there be a "." in a repo name?
+      path = remote[/:([\w\/.-]*)/,1]
+      path.sub!(/.git\z/, "") if path
+      "#{@options['protocol']}://#{@options['github']}/#{path}"
+
+    end
+    # in either case return "https://github.onlive.com/Engineering/ruby_git_hooks"
+  end
+
+  def build_commit_uri(commit)
+    # like https://github.onlive.com/Engineering/ruby_git_hooks/commit/b067c718a74315224bf88a267a82ac85054cdf6e
+    remote_path = repo_remote_path
+    uri = "#{remote_path}/commit/#{commit}"
+  end
+
+  def get_committer(commit)
+    RubyGitHooks::Hook.shell!("git log #{commit} -1 --pretty=%cn") rescue ""
+  end
+
+  def get_change_list(commit)
+    # we want changes from the previous commit, if any
+    base, current = Hook.shell!("git log #{commit} -2 --pretty=%H").split
+    puts "Getting Change List #{base} #{current}"
+    if !current
+      puts "INITIAL COMMIT"
+      # This is the initial commit so all files were added, but have to add the A ourselves
+      files_with_status = Hook.shell!("git ls-tree --name-status -r #{commit}").split("\n")
+      # put the A at the front
+      files_with_status.map!{|filename| "A\t" + filename}
+    else
+
+      files_with_status = Hook.shell!("git diff --name-status #{base}..#{current}")
+    end
+    puts files_with_status
+    files_with_status
+  end
+
+  def get_comment_content(commit, commit_message)
+    #  Needs to look like the git equivalent of this
+    #/opt/svn/ops rev 37251 committed by andy.lee      (commit shah and committer)
+    #http://viewvc.onlive.net/viewvc/ops?rev=37251&view=rev   (github link)
+    #NOC-3863 adding check to configs for testing    (commit message and changes)
+    #                                   U /trunk/puppet/dist/nagios/nrpe.cfg
+    #                                   U /trunk/puppet/dist/nagios/ol_checks.cfg
+    # return as a string
+    # bac9b85f2 committed by Ruth Helfinstein
+    # https://github.onlive.com/ruth-helfinstein/ruth-test/commit/bac9b85f2c98ccdba8d25f0b9a6e855cd2535901
+    # SYSINT-5366 commit 1
+    #
+    # M	test.txt
+
+
+     github_link = build_commit_uri(commit)
+     changes = get_change_list(commit)
+     committer = get_committer(commit)
+
+    text = <<END
+revision #{commit[0..8]} committed by #{committer}
+#{github_link}
+#{commit_message}
+#{changes}
+END
   end
 
   def check_one_commit(commit, commit_message)
@@ -78,15 +154,15 @@ class JiraCommentAddHook < RubyGitHooks::Hook
 
     # we know we have to add comments for at least one ticket
     # so build up the options with more info about the commit.
+    # the comment will be the same in each ticket
 
-    options = {:commit_message => commit_message}
-
+    comment_text = get_comment_content(commit, commit_message)
 
     success = false
     jira_tickets.each do |ticket|
       valid_ticket = check_for_valid_ticket(ticket)
       if valid_ticket
-        add_comment(ticket, options)
+        add_comment(ticket, comment_text)
         success = true
       end
     end
@@ -96,30 +172,19 @@ class JiraCommentAddHook < RubyGitHooks::Hook
     return success    # did we find any valid tickets?
   end
 
-  def get_comment_content(ticket, options)
 
-    #  Needs to look like the git equivalent of this
-    #/opt/svn/ops rev 37251 committed by andy.lee      (commit shah and committer)
-    #http://viewvc.onlive.net/viewvc/ops?rev=37251&view=rev   (github link)
-    #NOC-3863 adding check to configs for testing    (commit message and changes)
-    #                                   U /trunk/puppet/dist/nagios/nrpe.cfg
-    #                                   U /trunk/puppet/dist/nagios/ol_checks.cfg
-    # return as a string
-    "Commit message: #{options[:commit_message]}"
-  end
 
-  def add_comment(ticket, options)
+  def add_comment(ticket, comment_text)
     puts "ADDING COMMENT for ticket #{ticket}"
-    return unless ticket == "SYSINT-5366" # just test with a single issue until get the text right.
     uri = build_uri(ticket, "comment")
-    puts uri
-    data = {"body" => get_comment_content(ticket, options)}
-    # Data needs to include a link to the github commit, etc just like the svn
+    data = {"body" => comment_text}
 
     puts data
-    resp = RestClient.post(uri, data.to_json, :content_type => :json, :accept=>:json)
-    hash = JSON.parse(resp)
-    puts "Added comment #{data}"
+    if ticket == "SYSINT-5366" # just test with a single issue until get the text right.
+      resp = RestClient.post(uri, data.to_json, :content_type => :json, :accept=>:json)
+      hash = JSON.parse(resp)
+      puts "Added comment"
+    end
   end
 
   def check_for_valid_ticket(ticket)
