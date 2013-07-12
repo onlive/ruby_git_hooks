@@ -54,7 +54,7 @@ class JiraCommentAddHook < RubyGitHooks::Hook
     end
     # called with a list of commits to check, as post-receive.
 
-    commits.each do |commit|
+    commits.reverse_each do |commit|
 
       options = {}
 
@@ -102,9 +102,7 @@ class JiraCommentAddHook < RubyGitHooks::Hook
   def get_change_list(commit)
     # we want changes from the previous commit, if any
     base, current = Hook.shell!("git log #{commit} -2 --pretty=%H").split
-    puts "Getting Change List #{base} #{current}"
     if !current
-      puts "INITIAL COMMIT"
       # This is the initial commit so all files were added, but have to add the A ourselves
       files_with_status = Hook.shell!("git ls-tree --name-status -r #{commit}").split("\n")
       # put the A at the front
@@ -113,7 +111,6 @@ class JiraCommentAddHook < RubyGitHooks::Hook
 
       files_with_status = Hook.shell!("git diff --name-status #{base}..#{current}")
     end
-    puts files_with_status
     files_with_status
   end
 
@@ -125,7 +122,7 @@ class JiraCommentAddHook < RubyGitHooks::Hook
     #                                   U /trunk/puppet/dist/nagios/nrpe.cfg
     #                                   U /trunk/puppet/dist/nagios/ol_checks.cfg
     # return as a string
-    # bac9b85f2 committed by Ruth Helfinstein
+    # revision bac9b85f2 committed by Ruth Helfinstein
     # https://github.onlive.com/ruth-helfinstein/ruth-test/commit/bac9b85f2c98ccdba8d25f0b9a6e855cd2535901
     # SYSINT-5366 commit 1
     #
