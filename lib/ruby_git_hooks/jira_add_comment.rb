@@ -47,22 +47,16 @@ class JiraCommentAddHook < RubyGitHooks::Hook
 
 
   def check
-    success = true  # assume we're going to get all the way through, but remember if we don't
-
     if commits.empty? && commit_message && commit_message.length > 0  # we were called pre-commit
       return check_one_commit_message(commit_message)
     end
     # called with a list of commits to check, as post-receive.
 
     commits.reverse_each do |commit|
-
-      options = {}
-
       commit_message = RubyGitHooks::Hook.shell!("git log #{commit} -1 --pretty=%B").rstrip
-      puts "Checking #{commit[0..7]} #{commit_message}"
       check_one_commit(commit, commit_message )
     end
-    return true #
+    return true
   end
 
   # Do not show password when converting to string
@@ -74,35 +68,34 @@ class JiraCommentAddHook < RubyGitHooks::Hook
   def repo_remote_path
     remote_urls = RubyGitHooks::Hook.shell!("git remote -v").split
     remote = remote_urls[1]  # ["origin", "git@github.onlive.com:Engineering/ruby_git_hooks.git", "fetch", ...]
+    return "" if !remote   # ?? should we raise an error here? all the repos SHOULD have remotes.
+
     uri = URI.parse(remote) rescue nil
     if uri
       #  "https://github.onlive.com/Engineering/ruby_git_hooks.git "
-      return uri.to_s.sub(/.git\z/, "")
+      uri.to_s.sub(/.git\z/, "")
     else
       # "git@github.onlive.com:Engineering/ruby_git_hooks.git"
       # ?? Can there be a "." in a repo name?
       path = remote[/:([\w\/.-]*)/,1]
       path.sub!(/.git\z/, "") if path
       "#{@options['protocol']}://#{@options['github']}/#{path}"
-
     end
     # in either case return "https://github.onlive.com/Engineering/ruby_git_hooks"
   end
 
   def build_commit_uri(commit)
     # like https://github.onlive.com/Engineering/ruby_git_hooks/commit/b067c718a74315224bf88a267a82ac85054cdf6e
-    remote_path = repo_remote_path
-    uri = "#{remote_path}/commit/#{commit}"
-  end
 
-  def get_committer(commit)
-    RubyGitHooks::Hook.shell!("git log #{commit} -1 --pretty=%cn") rescue ""
+    uri = "#{repo_remote_path}/commit/#{commit}"
   end
 
   def get_change_list(commit)
     # we want changes from the previous commit, if any
-    base, current = Hook.shell!("git log #{commit} -2 --pretty=%H").split
-    if !current
+    # ideally this list should be available from the ruby_git_hooks directly
+    # since they go through this same process.
+    current, base = Hook.shell!("git log #{commit} -2 --pretty=%H").split
+    if !base
       # This is the initial commit so all files were added, but have to add the A ourselves
       files_with_status = Hook.shell!("git ls-tree --name-status -r #{commit}").split("\n")
       # put the A at the front
@@ -123,25 +116,28 @@ class JiraCommentAddHook < RubyGitHooks::Hook
     #                                   U /trunk/puppet/dist/nagios/ol_checks.cfg
     # return as a string
     # revision bac9b85f2 committed by Ruth Helfinstein
+    # Fri Jul 12 13:57:28 2013 -0700
     # https://github.onlive.com/ruth-helfinstein/ruth-test/commit/bac9b85f2c98ccdba8d25f0b9a6e855cd2535901
-    # SYSINT-5366 commit 1
+    # SYSINT-5366 commit message
     #
     # M	test.txt
 
 
-     github_link = build_commit_uri(commit)
+     github_link = build_commit_uri(commit)      # have to do this separately
      changes = get_change_list(commit)
-     committer = get_committer(commit)
+
+     revision_and_date = Hook.shell!("git log #{commit} -1 --pretty='Revision: %h committed by %cn%nCommit date: %cd'") rescue ""
 
     text = <<END
-revision #{commit[0..8]} committed by #{committer}
-#{github_link}
+#{revision_and_date}
 #{commit_message}
 #{changes}
+#{github_link}
 END
   end
 
   def check_one_commit(commit, commit_message)
+    puts "Checking #{commit[0..6]} #{commit_message}"
 
     jira_tickets = commit_message.scan(JiraReferenceCheckHook::JIRA_TICKET_REGEXP).map(&:strip)
     if jira_tickets.length == 0
@@ -172,15 +168,18 @@ END
 
 
   def add_comment(ticket, comment_text)
-    puts "ADDING COMMENT for ticket #{ticket}"
+    STDERR.puts "ADDING COMMENT for ticket #{ticket}"
     uri = build_uri(ticket, "comment")
     data = {"body" => comment_text}
 
-    puts data
+    STDERR.puts comment_text
+
     if ticket == "SYSINT-5366" # just test with a single issue until get the text right.
       resp = RestClient.post(uri, data.to_json, :content_type => :json, :accept=>:json)
-      hash = JSON.parse(resp)
-      puts "Added comment"
+      # hash = JSON.parse(resp)
+      STDERR.puts "(Added comment)"
+      # do we need to check anything about the response to see if it went ok?
+      # it will throw an error if ticket not found or something.
     end
   end
 
