@@ -128,12 +128,7 @@ class JiraCommentAddHook < RubyGitHooks::Hook
 
      revision_and_date = Hook.shell!("git log #{commit} -1 --pretty='Revision: %h committed by %cn%nCommit date: %cd'") rescue ""
 
-    text = <<END
-#{revision_and_date}
-#{commit_message}
-#{changes}
-#{github_link}
-END
+    text = "#{revision_and_date}#{github_link}\n\n#{commit_message}{noformat}#{changes}{noformat}"
   end
 
   def check_one_commit(commit, commit_message)
