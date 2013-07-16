@@ -93,7 +93,7 @@ class CopyrightCheckHook < RubyGitHooks::Hook
       end
     end
 
-    puts "Warnings for commit:\n#{desc}"
+    STDERR.puts "Warnings for commit from Copyright Check:\n#{desc}"
 
     # Block commit if installed as a pre-commit or pre-receive hook
     false
@@ -108,9 +108,9 @@ class CopyrightCheckHook < RubyGitHooks::Hook
     # when more than one return first_commit..last_commit
     # use the shortened SHAH1 for readability
     if self.commits.size == 1
-      "#{self.commits.first[0..6]}"
+      "#{self.commits.first}"
     else
-      "#{self.commits.last[0..6]}..#{self.commits.first[0..6]}"
+      "#{self.commits.last}..#{self.commits.first}"
     end
   end
 
