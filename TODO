@@ -31,3 +31,10 @@
   easily combine multiple hooks -- for instance, the cloner's personal
   hooks, the workplace's at-work hooks and the project's supplied
   hooks.  Wouldn't always be a good idea, of course.
+
+* Document (and figure out) how to write new hooks that aren't part of RubyGitHooks gem
+  There are details about how directories and environment variables are set 
+  up by git when the hooks are called that can affect things like includes done by the hook.
+  For example most hooks are called with GIT_DIR set to .git and the working directory
+  set to the repo root BUT pre and post-receive are called with GIT_DIR set to '.' 
+  and the working directory set to <repo root>/.git.  
