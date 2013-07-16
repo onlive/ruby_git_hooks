@@ -20,6 +20,8 @@ class CopyrightCheckHook < RubyGitHooks::Hook
 
   Hook = RubyGitHooks::Hook
 
+  attr_accessor   :cur_year
+
   def initialize(options = {})
     bad_options = options.keys - OPTIONS
     raise "CopyrightCheckHook created with unrecognized options: " +
@@ -31,6 +33,7 @@ class CopyrightCheckHook < RubyGitHooks::Hook
     @options["subject"] ||= "Copyright Your Files, Please!"
     @options["via"] ||= "no_send"
     @options["via_options"] ||= {}
+    @cur_year = Time.now.strftime("%Y")
   end
 
   # TODO: use Regexp#scan instead of just the first match
@@ -98,17 +101,29 @@ class CopyrightCheckHook < RubyGitHooks::Hook
 
   protected
 
+  def commit_list
+    # return the list of commits to display. We don't want to show them all
+    # (it looks scary when there's a lot)
+    # when there's only one, just return the commit
+    # when more than one return first_commit..last_commit
+    # use the shortened SHAH1 for readability
+    if self.commits.size == 1
+      "#{self.commits.first[0..6]}"
+    else
+      "#{self.commits.last[0..6]}..#{self.commits.first[0..6]}"
+    end
+  end
+
   #
   # Return an appropriate email based on the set of files with
   # problems.  If you need a different format, please inherit from
   # CopyrightCheckHook and override this method.
   #
   def build_description(no_notice, outdated_notice, outdated_company)
-    bad_files = no_notice | outdated_notice | outdated_company
 
     description = @options["intro"] || ""
     description.concat <<DESCRIPTION
-In your commit(s): #{self.commits.join(" ")}
+In your commit(s): #{commit_list}
 
 You have outdated, inaccurate or missing copyright notices.
 
@@ -140,12 +155,6 @@ The following files have no notice or a notice I didn't recognize:
 
   #{no_notice.join("\n  ")}
 
-DESCRIPTION
-
-    description.concat <<DESCRIPTION
-All files with problems:
-
-  #{bad_files.join("\n  ")}
 DESCRIPTION
     end
 
