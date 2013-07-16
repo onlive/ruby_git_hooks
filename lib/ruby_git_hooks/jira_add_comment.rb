@@ -21,7 +21,7 @@ require "json"
 class JiraCommentAddHook < RubyGitHooks::Hook
   Hook = RubyGitHooks::Hook
 
-  OPTIONS = [ "protocol", "host", "username", "password", "api_path", "github"]
+  OPTIONS = [ "protocol", "host", "username", "password", "api_path", "github", "issues"]
 
   def initialize(options = {})
     bad_options = options.keys - OPTIONS
@@ -47,8 +47,8 @@ class JiraCommentAddHook < RubyGitHooks::Hook
 
 
   def check
-    if commits.empty? && commit_message && commit_message.length > 0  # we were called pre-commit
-      return check_one_commit_message(commit_message)
+    if commits.empty?
+      STDERR.puts "JiraCommentAddHook - need list of commits to process"
     end
     # called with a list of commits to check, as post-receive.
 
@@ -132,7 +132,7 @@ class JiraCommentAddHook < RubyGitHooks::Hook
   end
 
   def check_one_commit(commit, commit_message)
-    puts "Checking #{commit[0..6]} #{commit_message}"
+    STDERR.puts "Checking #{commit[0..6]} #{commit_message}"
 
     jira_tickets = commit_message.scan(JiraReferenceCheckHook::JIRA_TICKET_REGEXP).map(&:strip)
     if jira_tickets.length == 0
@@ -169,7 +169,7 @@ class JiraCommentAddHook < RubyGitHooks::Hook
 
     STDERR.puts comment_text
 
-    if ticket == "SYSINT-5366" # just test with a single issue until get the text right.
+    if !@options["issues"] || @options["issues"].include(ticket) # can limit to single issue until get the text right.
       resp = RestClient.post(uri, data.to_json, :content_type => :json, :accept=>:json)
       # hash = JSON.parse(resp)
       STDERR.puts "(Added comment)"
@@ -180,7 +180,9 @@ class JiraCommentAddHook < RubyGitHooks::Hook
 
   def check_for_valid_ticket(ticket)
     begin
-      resp = RestClient.get build_uri(ticket)
+
+      uri = build_uri(ticket)
+      resp = RestClient.get uri
       hash = JSON.parse(resp)
 
       # Grab the Jira bug status, or fall back to allowing
@@ -188,7 +190,7 @@ class JiraCommentAddHook < RubyGitHooks::Hook
       status = hash["fields"]["status"]["name"] rescue "open"
 
       if status.downcase == "closed"
-        puts "Issue #{ticket} is closed, not allowing."
+        STDERR.puts "Issue #{ticket} is closed, not allowing."
       else
         # Bug was open, probably.  Allow it!
         return true
