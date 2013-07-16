@@ -172,7 +172,7 @@ class JiraCommentAddHook < RubyGitHooks::Hook
 
     STDERR.puts comment_text
 
-    if !@options["issues"] || @options["issues"].include(ticket) # can limit to single issue until get the text right.
+    if !@options["issues"] || @options["issues"].include?(ticket) # can limit to single issue until get the text right.
       resp = RestClient.post(uri, data.to_json, :content_type => :json, :accept=>:json)
       # hash = JSON.parse(resp)
       STDERR.puts "(Added comment)"
