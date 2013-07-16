@@ -51,12 +51,15 @@ class JiraCommentAddHook < RubyGitHooks::Hook
       STDERR.puts "JiraCommentAddHook - need list of commits to process"
     end
     # called with a list of commits to check, as post-receive.
-
+    # consider it a success for now only if all commit checks are successful
+    # may cause us to redo some of the checks.
+    # but for now it's all or nothing.
+    success = true
     commits.reverse_each do |commit|
       commit_message = RubyGitHooks::Hook.shell!("git log #{commit} -1 --pretty=%B").rstrip
-      check_one_commit(commit, commit_message )
+      success = false unless check_one_commit(commit, commit_message )
     end
-    return true
+    return success
   end
 
   # Do not show password when converting to string
