@@ -22,6 +22,9 @@ class JiraCommentAddHook < RubyGitHooks::Hook
   Hook = RubyGitHooks::Hook
 
   OPTIONS = [ "protocol", "host", "username", "password", "api_path", "github", "issues"]
+  VALID_ERROR_TYPES = [:no_jira, :invalid_jira]
+
+  attr_accessor :errors_to_report
 
   def initialize(options = {})
     bad_options = options.keys - OPTIONS
@@ -37,6 +40,8 @@ class JiraCommentAddHook < RubyGitHooks::Hook
     @options["host"] ||= "jira"
     @options["api_path"] ||= "rest/api/latest/issue"
     @options["github"] ||= "github.com"
+
+    @errors_to_report = {}  # listed in hash indexed by user
   end
 
   def build_uri(ticket, command=nil)
@@ -232,4 +237,62 @@ class JiraCommentAddHook < RubyGitHooks::Hook
     end
     false # if we get to this point it's not a valid ticket
   end
+  def add_error_to_report(commit, msg, error_type = "no_jira")
+    # remember this error so we can report it later with others by this committer
+
+    #commiter_name, committer_email = Hook.shell!("git log #{commit} -1 --pretty='%cN%n%cE'").split("\n") rescue "no email"
+    committer_email = Hook.shell!("git log #{commit} -1 --pretty='%cE'").chomp rescue "no email"
+
+    if !errors_to_report[committer_email]   # in case first error for this committer
+      errors_to_report[committer_email] = {"no_jira" => [], "invalid_jira" => []}
+    end
+    errors_to_report[committer_email][error_type] << "#{commit[0..6]} #{msg}"
+  end
+
+  def report_errors
+    # report any errors we have reported
+    errors_to_report.each do |committer_email, details|
+      puts "Sending message to #{committer_email}"
+      msg = build_message(details["no_jira"], details["invalid_jira"])
+      puts msg
+      puts "<end email>"
+    end
+  end
+
+  def build_message(no_jira = [], invalid_jira= [])
+    description = @options["intro"] || ""
+    description.concat <<DESCRIPTION
+This notice is to remind you that you need to include valid Jira ticket
+numbers in all of your Git commits!
+DESCRIPTION
+    if no_jira.size > 0
+      description.concat <<DESCRIPTION
+The following commits have no reference to any jira tickets
+
+  #{no_jira.join("\n  ")}
+-----
+DESCRIPTION
+    end
+
+    if invalid_jira.size > 0
+      description.concat <<DESCRIPTION
+The following commits have reference invalid Jira ticket numbers
+that don't exist or have already been closed.
+
+  #{invalid_jira.join("\n  ")}
+-----
+DESCRIPTION
+    end
+
+    description.concat <<DESCRIPTION
+Please be more careful in future commits.
+
+For information about installing the local onlive git hooks, which can
+help you remember, see https://wiki.onlive.com/display/DOCS/OnLive+Git+Hooks
+DESCRIPTION
+
+  end
 end
+
+
+
