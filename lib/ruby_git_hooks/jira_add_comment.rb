@@ -21,7 +21,8 @@ require "json"
 class JiraCommentAddHook < RubyGitHooks::Hook
   Hook = RubyGitHooks::Hook
 
-  OPTIONS = [ "protocol", "host", "username", "password", "api_path", "github", "issues"]
+  OPTIONS = [ "protocol", "host", "username", "password",
+              "api_path", "github", "issues", "logger"]
   VALID_ERROR_TYPES = [:no_jira, :invalid_jira]
 
   attr_accessor :errors_to_report
