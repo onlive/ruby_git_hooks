@@ -53,6 +53,7 @@ end
 # of .rvmrc using a gemset that doesn't have rubygithooks and hence
 # doesn't have git add-hooks.
 if ARGV[0] && Dir.exist?(ARGV[0])
+  STDERR.puts "Installing into #{ARGV[0]}"
   Dir.chdir(ARGV[0])
 end
 

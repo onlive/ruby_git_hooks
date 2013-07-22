@@ -157,7 +157,7 @@ class JiraCommentAddHook < RubyGitHooks::Hook
   end
 
   def check_one_commit(commit, commit_message)
-    STDERR.puts "Checking #{commit[0..6]} #{commit_message}"
+    STDERR.puts "Checking #{commit[0..6]} #{commit_message.lines.first}"
 
     jira_tickets = commit_message.scan(JiraReferenceCheckHook::JIRA_TICKET_REGEXP).map(&:strip)
     if jira_tickets.length == 0
