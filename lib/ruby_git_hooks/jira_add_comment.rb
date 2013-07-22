@@ -22,7 +22,9 @@ class JiraCommentAddHook < RubyGitHooks::Hook
   Hook = RubyGitHooks::Hook
 
   OPTIONS = [ "protocol", "host", "username", "password",
-              "api_path", "github", "issues", "logger"]
+              "api_path", "github", "issues",
+              "domain", "from", "subject", "via", "via_options", "intro", "conclusion",
+              "no_send"]
   VALID_ERROR_TYPES = [:no_jira, :invalid_jira]
 
   attr_accessor :errors_to_report
@@ -41,6 +43,16 @@ class JiraCommentAddHook < RubyGitHooks::Hook
     @options["host"] ||= "jira"
     @options["api_path"] ||= "rest/api/latest/issue"
     @options["github"] ||= "github.com"
+
+
+    # options for error emailing
+
+    @options["domain"] ||= "mydomain.com"
+    @options["from"] ||= "Jira Jailer <noreply@#{@options["domain"]}>"
+    @options["subject"] ||= "Use Jira Ticket Numbers, Please!"
+    @options["via"] ||= "no_send"
+    @options["via_options"] ||= {}
+
 
     @errors_to_report = {}  # listed in hash indexed by user
   end
@@ -65,6 +77,9 @@ class JiraCommentAddHook < RubyGitHooks::Hook
       commit_message = RubyGitHooks::Hook.shell!("git log #{commit} -1 --pretty=%B").rstrip
       success = false unless check_one_commit(commit, commit_message )
     end
+
+    # send email regarding failed commits
+    report_errors
     return success
   end
 
@@ -77,7 +92,7 @@ class JiraCommentAddHook < RubyGitHooks::Hook
   def repo_remote_path
     remote_urls = RubyGitHooks::Hook.shell!("git remote -v").split
     remote = remote_urls[1]  # ["origin", "git@github.onlive.com:Engineering/ruby_git_hooks.git", "fetch", ...]
-    return "" if !remote   # ?? should we raise an error here? all the repos SHOULD have remotes.
+    return "" if !remote   # No remote.
 
     uri = URI.parse(remote) rescue nil
     if uri
@@ -91,6 +106,7 @@ class JiraCommentAddHook < RubyGitHooks::Hook
       "#{@options['protocol']}://#{@options['github']}/#{path}"
     end
     # in either case return "https://github.onlive.com/Engineering/ruby_git_hooks"
+
   end
 
   def build_commit_uri(commit)
@@ -146,6 +162,7 @@ class JiraCommentAddHook < RubyGitHooks::Hook
     jira_tickets = commit_message.scan(JiraReferenceCheckHook::JIRA_TICKET_REGEXP).map(&:strip)
     if jira_tickets.length == 0
       STDERR.puts "Commit message must refer to a jira ticket"
+      add_error_to_report(commit, commit_message, "no_jira")
       return false
     end
 
@@ -165,6 +182,7 @@ class JiraCommentAddHook < RubyGitHooks::Hook
     end
 
     STDERR.puts "Commit message must refer to a valid jira ticket" if !success
+    add_error_to_report(commit, commit_message, "invalid_jira")
 
     return success    # did we find any valid tickets?
   end
@@ -238,6 +256,23 @@ class JiraCommentAddHook < RubyGitHooks::Hook
     end
     false # if we get to this point it's not a valid ticket
   end
+
+  def commit_list
+    # return the list of commits to display. We don't want to show them all
+    # (it looks scary when there's a lot)
+    # when there's only one, just return the commit
+    # when more than one return first_commit..last_commit
+    # use the shortened SHAH1 for readability
+    return "" if !self.commits || self.commits.empty?
+
+    if self.commits.size == 1
+      "#{self.commits.first[0..6]}"
+    else
+      "#{self.commits.last[0..6]}..#{self.commits.first[0..6]}"
+    end
+  end
+
+
   def add_error_to_report(commit, msg, error_type = "no_jira")
     # remember this error so we can report it later with others by this committer
 
@@ -252,19 +287,43 @@ class JiraCommentAddHook < RubyGitHooks::Hook
 
   def report_errors
     # report any errors we have reported
-    errors_to_report.each do |committer_email, details|
-      puts "Sending message to #{committer_email}"
-      msg = build_message(details["no_jira"], details["invalid_jira"])
-      puts msg
-      puts "<end email>"
-    end
+      require "pony" unless @options["no_send"] || @options["via"] == "no_send" # wait until we need it
+                      # NOTE: Pony breaks on Windows so don't use this option in Windows.
+      errors_to_report.each do |email, details|
+        desc =  build_message(details["no_jira"], details["invalid_jira"])
+        STDERR.puts "Warnings for commit from Jira Add Comment Check:"
+        STDERR.puts desc
+
+        unless @options["no_send"] || @options["via"] == "no_send"
+          STDERR.puts "Sending warning email to #{email}"
+          ret = Pony.mail :to => email,
+                        :from => @options["from"],
+                        :subject => @options["subject"],
+                        :body => desc,
+                        :via => @options["via"],
+                        :via_options => @options["via_options"]
+
+        end
+
+
+      end
+
+
   end
+
+  # Build the email message.
+  # use the remote repo path for the name of the repo
+  # since this is always run as post_receive, there should always be a remote path.
 
   def build_message(no_jira = [], invalid_jira= [])
     description = @options["intro"] || ""
     description.concat <<DESCRIPTION
 This notice is to remind you that you need to include valid Jira ticket
 numbers in all of your Git commits!
+
+In your commits(s):#{commit_list}
+to repository: #{repo_remote_path}
+
 DESCRIPTION
     if no_jira.size > 0
       description.concat <<DESCRIPTION
@@ -285,13 +344,8 @@ that don't exist or have already been closed.
 DESCRIPTION
     end
 
-    description.concat <<DESCRIPTION
-Please be more careful in future commits.
-
-For information about installing the local onlive git hooks, which can
-help you remember, see https://wiki.onlive.com/display/DOCS/OnLive+Git+Hooks
-DESCRIPTION
-
+    description.concat @options["conclusion"]  if @options["conclusion"]
+    description
   end
 end
 
