@@ -75,7 +75,7 @@ FILE_CONTENTS
 
     # Should get email with the most recent commit about
     # file_w_no_copy_notice.rb, which has no copyright notice.
-    assert mail_out.include?(last_commit_sha),
+    assert mail_out.include?(last_commit_sha[0..6]),
       "Mail message must include latest SHA!"
     assert mail_out.include?("file_w_no_copy_notice.rb"),
       "Mail message must mention file_w_no_copy_notice.rb!"
