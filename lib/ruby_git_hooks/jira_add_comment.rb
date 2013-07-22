@@ -180,9 +180,11 @@ class JiraCommentAddHook < RubyGitHooks::Hook
         success = true
       end
     end
-
-    STDERR.puts "Commit message must refer to a valid jira ticket" if !success
-    add_error_to_report(commit, commit_message, "invalid_jira")
+    
+    unless success
+      STDERR.puts "Commit message must refer to a valid jira ticket"
+      add_error_to_report(commit, commit_message, "invalid_jira")
+    end
 
     return success    # did we find any valid tickets?
   end
@@ -336,7 +338,7 @@ DESCRIPTION
 
     if invalid_jira.size > 0
       description.concat <<DESCRIPTION
-The following commits have reference invalid Jira ticket numbers
+The following commits reference invalid Jira ticket numbers
 that don't exist or have already been closed.
 
   #{invalid_jira.join("\n  ")}
