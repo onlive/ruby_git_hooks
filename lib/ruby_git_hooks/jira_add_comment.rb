@@ -287,10 +287,10 @@ class JiraCommentAddHook < RubyGitHooks::Hook
     # "email2@test.com" => {...} }
 
 
-    author_email = Hook.shell!("git log #{commit} -1 --pretty='%aE'").chomp rescue "no email"
-
+    author_email = Hook.shell!("git log #{commit} -1 --pretty='%aN <%aE>'").chomp rescue "no email"
+    
     errors_to_report[author_email]  ||= {"no_jira" => [], "invalid_jira" => []}  # in case first error for this author
-    errors_to_report[author_email][error_type] << "#{build_commit_uri(commit[0..7])}\n      #{msg}"
+    errors_to_report[author_email][error_type] << "#{build_commit_uri(commit[0..7])}\n#{msg}"
   end
 
   def report_errors
@@ -335,6 +335,7 @@ DESCRIPTION
     if no_jira.size > 0
       description.concat <<DESCRIPTION
 Commits with no reference to any jira tickets:
+
   #{no_jira.join("\n  ")}
 -----
 DESCRIPTION
@@ -342,10 +343,10 @@ DESCRIPTION
 
     if invalid_jira.size > 0
       description.concat <<DESCRIPTION
-
 Commits which reference invalid Jira ticket numbers
 that don't exist or have already been closed:
-  #{invalid_jira.join("\n   ")}
+
+  #{invalid_jira.join("\n  ")}
 -----
 DESCRIPTION
     end

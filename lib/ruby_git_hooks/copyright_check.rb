@@ -80,12 +80,15 @@ class CopyrightCheckHook < RubyGitHooks::Hook
       recipients[name] = email
     end
 
+    STDERR.puts "Warnings for commit from Copyright Check:\n#{desc}"
+
     unless @options["no_send"] || @options["via"] == "no_send"
         require "pony"  # wait until we need it
                         # NOTE: Pony breaks on Windows so don't use this option in Windows.
         recipients.each do |name, email|
-        STDERR.puts "Sending warning email to #{email}"
-        ret = Pony.mail :to => email,
+          email_str = "#{name} <#{email}>"
+          STDERR.puts "Sending warning email to #{email_str}"
+          ret = Pony.mail :to => email_str,
                   :from => @options["from"],
                   :subject => @options["subject"],
                   :body => desc,
@@ -93,8 +96,6 @@ class CopyrightCheckHook < RubyGitHooks::Hook
                   :via_options => @options["via_options"]
       end
     end
-
-    STDERR.puts "Warnings for commit from Copyright Check:\n#{desc}"
 
     # Block commit if installed as a pre-commit or pre-receive hook
     false
@@ -132,8 +133,8 @@ class CopyrightCheckHook < RubyGitHooks::Hook
     description = @options["intro"] || ""
     description.concat <<DESCRIPTION
 
-In your commit(s): #{commit_list}
-to repository: #{current_repo}
+In repository: #{current_repo}
+commit(s): #{commit_list}
 
 You have outdated, inaccurate or missing copyright notices.
 
