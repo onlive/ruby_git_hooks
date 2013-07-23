@@ -277,14 +277,20 @@ class JiraCommentAddHook < RubyGitHooks::Hook
 
   def add_error_to_report(commit, msg, error_type = "no_jira")
     # remember this error so we can report it later with others by this committer
+    # store the string we'd like to print out about this commit (commit link and msg)
+    # to make it easier to print later
+    # (could store commit and message separately and process later if necessary)
+    # format:
+    # {"email1@test.com"" => {"no_jira" => ["www.github.com/commit/1234 invalid commit message",
+    #                                       "www.github.com/commit/6789 also invalid"]
+    #                         "invalid_jira" => ["www.github.com/commit/1212 ABC-123 invalid commit message"]}
+    # "email2@test.com" => {...} }
 
-    #commiter_name, committer_email = Hook.shell!("git log #{commit} -1 --pretty='%cN%n%cE'").split("\n") rescue "no email"
+
     committer_email = Hook.shell!("git log #{commit} -1 --pretty='%cE'").chomp rescue "no email"
 
-    if !errors_to_report[committer_email]   # in case first error for this committer
-      errors_to_report[committer_email] = {"no_jira" => [], "invalid_jira" => []}
-    end
-    errors_to_report[committer_email][error_type] << "#{commit[0..6]} #{msg}"
+    errors_to_report[committer_email]  ||= {"no_jira" => [], "invalid_jira" => []}  # in case first error for this committer
+    errors_to_report[committer_email][error_type] << "#{build_commit_uri(commit[0..7])}\n    #{msg}"
   end
 
   def report_errors
@@ -293,8 +299,8 @@ class JiraCommentAddHook < RubyGitHooks::Hook
                       # NOTE: Pony breaks on Windows so don't use this option in Windows.
       errors_to_report.each do |email, details|
         desc =  build_message(details["no_jira"], details["invalid_jira"])
-        STDERR.puts "Warnings for commit from Jira Add Comment Check:"
-        STDERR.puts desc
+        STDERR.puts "Warnings for commit from Jira Add Comment Check:\n-----------"
+        STDERR.puts "#{desc}\n-----------"
 
         unless @options["no_send"] || @options["via"] == "no_send"
           STDERR.puts "Sending warning email to #{email}"
@@ -323,14 +329,12 @@ class JiraCommentAddHook < RubyGitHooks::Hook
 This notice is to remind you that you need to include valid Jira ticket
 numbers in all of your Git commits!
 
-In your commits(s):#{commit_list}
-to repository: #{repo_remote_path}
+We encountered the following problems in your recent commits.
 
 DESCRIPTION
     if no_jira.size > 0
       description.concat <<DESCRIPTION
-The following commits have no reference to any jira tickets
-
+Commits with no reference to any jira tickets:
   #{no_jira.join("\n  ")}
 -----
 DESCRIPTION
@@ -338,15 +342,16 @@ DESCRIPTION
 
     if invalid_jira.size > 0
       description.concat <<DESCRIPTION
-The following commits reference invalid Jira ticket numbers
-that don't exist or have already been closed.
 
-  #{invalid_jira.join("\n  ")}
+Commits which reference invalid Jira ticket numbers
+that don't exist or have already been closed:
+  #{invalid_jira.join("\n   ")}
 -----
 DESCRIPTION
     end
 
     description.concat @options["conclusion"]  if @options["conclusion"]
+
     description
   end
 end

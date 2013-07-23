@@ -105,16 +105,11 @@ class CopyrightCheckHook < RubyGitHooks::Hook
   def commit_list
     # return the list of commits to display. We don't want to show them all
     # (it looks scary when there's a lot)
-    # when there's only one, just return the commit
-    # when more than one return first_commit..last_commit
-    # use the shortened SHAH1 for readability
-    return "" if self.commits.empty?
 
-    if self.commits.size == 1
-      "#{self.commits.first[0..6]}"
-    else
-      "#{self.commits.last[0..6]}..#{self.commits.first[0..6]}"
-    end
+    # return a list of the shortened SHAH1s for readability
+    # tried listing commit.last..commit.first but that didn't seem right either
+    # problem is really when there's dozens of commits.
+    self.commits.map {|c| c[0..6]}.join(", ")
   end
 
   #
