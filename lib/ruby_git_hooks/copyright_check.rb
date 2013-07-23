@@ -112,6 +112,16 @@ class CopyrightCheckHook < RubyGitHooks::Hook
     self.commits.map {|c| c[0..6]}.join(", ")
   end
 
+
+  def current_repo
+      # which repository are these commits in
+    # Since we are running as a hook, we may get back the .git directory
+
+    full_path = Hook.shell!("git rev-parse --show-toplevel").chomp
+    # like "/path/to/repos/test-repo" or maybe "/path/to/repos/test-repo/.git"
+    # return "test-repo"
+    File.basename full_path.sub(/.git\z/, "")
+  end
   #
   # Return an appropriate email based on the set of files with
   # problems.  If you need a different format, please inherit from
@@ -123,6 +133,7 @@ class CopyrightCheckHook < RubyGitHooks::Hook
     description.concat <<DESCRIPTION
 
 In your commit(s): #{commit_list}
+to repository: #{current_repo}
 
 You have outdated, inaccurate or missing copyright notices.
 
