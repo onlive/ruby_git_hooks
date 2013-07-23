@@ -117,11 +117,6 @@ class CopyrightCheckHook < RubyGitHooks::Hook
     end
   end
 
-  def current_repo
-    # which repository are these commits in
-    File.basename `git rev-parse --show-toplevel`.chomp
-  end
-
   #
   # Return an appropriate email based on the set of files with
   # problems.  If you need a different format, please inherit from
@@ -131,8 +126,8 @@ class CopyrightCheckHook < RubyGitHooks::Hook
 
     description = @options["intro"] || ""
     description.concat <<DESCRIPTION
+
 In your commit(s): #{commit_list}
-to repository: #{current_repo}
 
 You have outdated, inaccurate or missing copyright notices.
 
