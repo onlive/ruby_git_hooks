@@ -276,7 +276,7 @@ class JiraCommentAddHook < RubyGitHooks::Hook
 
 
   def add_error_to_report(commit, msg, error_type = "no_jira")
-    # remember this error so we can report it later with others by this committer
+    # remember this error so we can report it later with others by this author
     # store the string we'd like to print out about this commit (commit link and msg)
     # to make it easier to print later
     # (could store commit and message separately and process later if necessary)
@@ -287,10 +287,10 @@ class JiraCommentAddHook < RubyGitHooks::Hook
     # "email2@test.com" => {...} }
 
 
-    committer_email = Hook.shell!("git log #{commit} -1 --pretty='%cE'").chomp rescue "no email"
+    author_email = Hook.shell!("git log #{commit} -1 --pretty='%aE'").chomp rescue "no email"
 
-    errors_to_report[committer_email]  ||= {"no_jira" => [], "invalid_jira" => []}  # in case first error for this committer
-    errors_to_report[committer_email][error_type] << "#{build_commit_uri(commit[0..7])}\n    #{msg}"
+    errors_to_report[author_email]  ||= {"no_jira" => [], "invalid_jira" => []}  # in case first error for this author
+    errors_to_report[author_email][error_type] << "#{build_commit_uri(commit[0..7])}\n      #{msg}"
   end
 
   def report_errors
