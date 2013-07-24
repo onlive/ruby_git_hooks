@@ -161,7 +161,7 @@ class JiraCommentAddHook < RubyGitHooks::Hook
 
     jira_tickets = commit_message.scan(JiraReferenceCheckHook::JIRA_TICKET_REGEXP).map(&:strip)
     if jira_tickets.length == 0
-      STDERR.puts "Commit message must refer to a jira ticket"
+      STDERR.puts ">>Commit message must refer to a jira ticket"
       add_error_to_report(commit, commit_message, "no_jira")
       return false
     end
@@ -182,7 +182,7 @@ class JiraCommentAddHook < RubyGitHooks::Hook
     end
     
     unless success
-      STDERR.puts "Commit message must refer to a valid jira ticket"
+      STDERR.puts ">>Commit message must refer to a valid jira ticket"
       add_error_to_report(commit, commit_message, "invalid_jira")
     end
 
@@ -201,7 +201,6 @@ class JiraCommentAddHook < RubyGitHooks::Hook
     if !@options["issues"] || @options["issues"].include?(ticket) # can limit to single issue until get the text right.
       resp = RestClient.post(uri, data.to_json, :content_type => :json, :accept=>:json)
       # hash = JSON.parse(resp)
-      STDERR.puts "(Added comment)"
       # do we need to check anything about the response to see if it went ok?
       # it will throw an error if ticket not found or something.
     end
@@ -299,8 +298,8 @@ class JiraCommentAddHook < RubyGitHooks::Hook
                       # NOTE: Pony breaks on Windows so don't use this option in Windows.
       errors_to_report.each do |email, details|
         desc =  build_message(details["no_jira"], details["invalid_jira"])
-        STDERR.puts "Warnings for commit from Jira Add Comment Check:\n-----------"
-        STDERR.puts "#{desc}\n-----------"
+        STDERR.puts "Warnings for commit from Jira Add Comment Check:\n--"
+        STDERR.puts "#{desc}\n--"
 
         unless @options["no_send"] || @options["via"] == "no_send"
           STDERR.puts "Sending warning email to #{email}"

@@ -80,7 +80,7 @@ class CopyrightCheckHook < RubyGitHooks::Hook
       recipients[name] = email
     end
 
-    STDERR.puts "Warnings for commit from Copyright Check:\n#{desc}"
+    STDERR.puts "Warnings for commit from Copyright Check:\n--#{desc}\n--"
 
     unless @options["no_send"] || @options["via"] == "no_send"
         require "pony"  # wait until we need it
@@ -96,7 +96,6 @@ class CopyrightCheckHook < RubyGitHooks::Hook
                   :via_options => @options["via_options"]
       end
     end
-    STDERR.puts "-----"
     # Block commit if installed as a pre-commit or pre-receive hook
     false
   end
