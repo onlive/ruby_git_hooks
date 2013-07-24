@@ -331,7 +331,7 @@ DESCRIPTION
       description.concat <<DESCRIPTION
 Commits with no reference to any jira tickets:
 
-  #{no_jira.join("\n  ")}
+  #{no_jira.join("\n--\n  ")}
 -----
 DESCRIPTION
     end
@@ -341,7 +341,7 @@ DESCRIPTION
 Commits which reference invalid Jira ticket numbers
 that don't exist or have already been closed:
 
-  #{invalid_jira.join("\n  ")}
+  #{invalid_jira.join("\n--\n  ")}
 -----
 DESCRIPTION
     end
