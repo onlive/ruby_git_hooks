@@ -96,7 +96,7 @@ class CopyrightCheckHook < RubyGitHooks::Hook
                   :via_options => @options["via_options"]
       end
     end
-
+    STDERR.puts "-----"
     # Block commit if installed as a pre-commit or pre-receive hook
     false
   end

@@ -310,13 +310,8 @@ class JiraCommentAddHook < RubyGitHooks::Hook
                         :body => desc,
                         :via => @options["via"],
                         :via_options => @options["via_options"]
-
         end
-
-
       end
-
-
   end
 
   # Build the email message.
