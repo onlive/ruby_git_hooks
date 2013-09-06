@@ -16,7 +16,7 @@ class CopyrightCheckHook < RubyGitHooks::Hook
                ]
 
   OPTIONS = [ "domain", "from", "subject", "via", "via_options", "intro",
-              "no_send", "company_check" ]
+              "no_send", "company_check", "exclude_files" ]
 
   Hook = RubyGitHooks::Hook
 
@@ -33,6 +33,7 @@ class CopyrightCheckHook < RubyGitHooks::Hook
     @options["subject"] ||= "Copyright Your Files, Please!"
     @options["via"] ||= "no_send"
     @options["via_options"] ||= {}
+    @options["exclude_files"]  ||= []   # for generated files, etc.
     @cur_year = Time.now.strftime("%Y")
   end
 
@@ -48,6 +49,7 @@ class CopyrightCheckHook < RubyGitHooks::Hook
       extension = (filename.split(".") || [])[-1]
       next unless EXTENSIONS.include?(extension)
       next if file_contents[filename] == ""  # for now this is how we recognize a deleted file.
+      next if @options["exclude_files"].include? filename
       if file_contents[filename] =~ COPYRIGHT_REGEXP
         parsed_cur_year = $~["cur_year"]
         parsed_company = $~["company"]

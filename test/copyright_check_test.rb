@@ -47,6 +47,23 @@ require "ruby_git_hooks/copyright_check"
 RubyGitHooks.run CopyrightCheckHook.new("no_send" => true)
 TEST
 
+  TEST_HOOK_EXCLUDE = <<TEST
+#{RubyGitHooks.shebang}
+require "ruby_git_hooks/copyright_check"
+
+RubyGitHooks.register CopyrightCheckHook.new("domain" => "onlive.com",
+  "from" => "Copyright Enforcement <noreply@onlive.com>",
+  "via" => :sendmail,
+  "via_options" => {
+    :location => #{FAKE_MAILER.inspect},
+    :arguments => '#{MAILER_FILE.inspect}'
+  },
+  "exclude_files" => ["schema.rb"]
+)
+
+RubyGitHooks.run
+TEST
+
   def setup
     # Empty out the test repos dir
     Hook.shell! "rm -rf #{File.join(REPOS_DIR, "*")}"
@@ -129,6 +146,14 @@ FILE_CONTENTS
 # Copyright (C) 2013 YoyoDyne, Inc.  All Rights Reserved.
 FILE_CONTENTS
 
+    assert !File.exist?(MAILER_FILE), "Copyright test must not send email!"
+  end
+
+  def test_copyright_exclude_files
+    add_hook("child_repo", "post-commit", TEST_HOOK_EXCLUDE)
+    new_commit("child_repo", "schema.rb", <<FILE_CONTENTS)
+# NO copyright but I'm an excluded file.
+FILE_CONTENTS
     assert !File.exist?(MAILER_FILE), "Copyright test must not send email!"
   end
 
