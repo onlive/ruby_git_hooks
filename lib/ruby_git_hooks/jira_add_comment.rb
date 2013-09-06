@@ -24,7 +24,7 @@ class JiraCommentAddHook < RubyGitHooks::Hook
   OPTIONS = [ "protocol", "host", "username", "password",
               "api_path", "github", "issues",
               "domain", "from", "subject", "via", "via_options", "intro", "conclusion",
-              "no_send"]
+              "no_send", "check_status"]
   VALID_ERROR_TYPES = [:no_jira, :invalid_jira]
 
   attr_accessor :errors_to_report
@@ -43,6 +43,7 @@ class JiraCommentAddHook < RubyGitHooks::Hook
     @options["host"] ||= "jira"
     @options["api_path"] ||= "rest/api/latest/issue"
     @options["github"] ||= "github.com"
+    @options["check_status"] ||= true   # don't allow "closed" issues by default
 
 
     # options for error emailing
@@ -212,16 +213,18 @@ class JiraCommentAddHook < RubyGitHooks::Hook
       resp = RestClient.get uri
       hash = JSON.parse(resp)
 
-      # Grab the Jira bug status, or fall back to allowing
-      # if the format is unexpected.
-      status = hash["fields"]["status"]["name"] rescue "open"
+      if @options["check_status"]
+        # Grab the Jira bug status, or fall back to allowing
+        # if the format is unexpected.
+        status = hash["fields"]["status"]["name"] rescue "open"
 
-      if status.downcase == "closed"
-        STDERR.puts "Issue #{ticket} is closed, not allowing."
-      else
-        # Bug was open, probably.  Allow it!
-        return true
+        if status.downcase == "closed"
+          STDERR.puts "Issue #{ticket} is closed, not allowing."
+          return false
+        end
       end
+      # The bug (probably) isn't closed (or we aren't checking),so we're valid!
+      return true
     rescue SocketError
       STDERR.puts "SocketError finding '#{@options["host"]}': #{$!.inspect}"
       STDERR.puts "Is '#{@options["host"]}' the right Jira hostname? "

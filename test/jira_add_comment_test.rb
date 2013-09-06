@@ -115,6 +115,8 @@ JSON
   end
 
   def test_multiple_references_none_good
+    dont_allow(JiraCommentAddHook).add_comment   # check that no comments are added
+                                                 # because there are no valid tickets
     mock(RestClient).get("https://user:password@jira.onlive.com/rest/api/latest/issue/BAD-456") do
       exc = RestClient::Exception.new
       mock(exc).http_code.at_least(1) { 404 }
@@ -124,6 +126,19 @@ JSON
 { "fields": { "status": { "name": "Closed" } } }
 JSON
     fake_hook_check("Message with CLOSE-123 BAD-456 reference to Jira" )
+  end
+
+  def test_closed_ok_when_not_checking
+    @hook = JiraCommentAddHook.new "host" => "jira.onlive.com",
+                                   "username" => "user", "password" => "password",
+                                   "check_status" => true
+
+    mock(RestClient).get("https://user:password@jira.onlive.com/rest/api/latest/issue/CLOSE-123") { <<JSON }
+{ "fields": { "status": { "name": "Closed" } } }
+JSON
+    fake_hook_check("Message with CLOSE-123 BAD-456 reference to Jira" )
+
+
   end
 
 
