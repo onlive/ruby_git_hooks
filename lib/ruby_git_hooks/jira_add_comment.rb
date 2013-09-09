@@ -1,4 +1,4 @@
-# Copyright (C) 2013 OL2, Inc. Some Rights Reserved. See LICENSE.txt for details.
+# Copyright (C) 2013 OL2, Inc. See LICENSE.txt for details.
 
 require "ruby_git_hooks"
 require "ruby_git_hooks/jira_ref_check"

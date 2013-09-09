@@ -1,9 +1,9 @@
-# Copyright (C) 2013 OL2, Inc. Some Rights Reserved. See LICENSE.txt for details.
+# Copyright (C) 2013 OL2, Inc. See LICENSE.txt for details.
 
 require "ruby_git_hooks"
 
 class CopyrightCheckHook < RubyGitHooks::Hook
-  COPYRIGHT_REGEXP = /Copyright\s+\(C\)\s*(?<pre_year>.*)-?(?<cur_year>\d{4})\s+(?<company>.+)\s+.* rights reserved\.?/i
+  COPYRIGHT_REGEXP = /Copyright\s+\(C\)\s*(?<pre_year>.*)-?(?<cur_year>\d{4})\s+(?<company>.+)/i
 
   # Only check files with known checkable extensions
   EXTENSIONS = [
