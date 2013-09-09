@@ -1,3 +1,5 @@
+# Copyright (C) 2013 OL2, Inc. Some Rights Reserved. See LICENSE.txt for details.
+
 require "ruby_git_hooks"
 
 # Check that commit message contains only ASCII characters

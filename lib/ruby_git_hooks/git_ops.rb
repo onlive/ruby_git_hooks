@@ -1,3 +1,5 @@
+# Copyright (C) 2013 OL2, Inc. Some Rights Reserved. See LICENSE.txt for details.
+
 module RubyGitHooks; end
 
 # TODO: this is currently only useful for unit tests, because it's

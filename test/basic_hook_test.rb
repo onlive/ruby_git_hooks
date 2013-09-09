@@ -1,4 +1,4 @@
-# Copyright (C) 2013 OL2, Inc.  All Rights Reserved.
+# Copyright (C) 2013 OL2, Inc. Some Rights Reserved. See LICENSE.txt for details.
 
 require "test_helper"
 

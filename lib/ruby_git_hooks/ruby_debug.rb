@@ -1,3 +1,5 @@
+# Copyright (C) 2013 OL2, Inc. Some Rights Reserved. See LICENSE.txt for details.
+
 require "ruby_git_hooks"
 
 # This exists primarily for testing.  I mean, you can use it and all, but...

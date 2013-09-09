@@ -1,7 +1,9 @@
+# Copyright (C) 2013 OL2, Inc. Some Rights Reserved. See LICENSE.txt for details.
+
 require "ruby_git_hooks"
 
 class CopyrightCheckHook < RubyGitHooks::Hook
-  COPYRIGHT_REGEXP = /Copyright\s+\(C\)\s*(?<pre_year>.*)-?(?<cur_year>\d{4})\s+(?<company>.+)\s+all rights reserved\.?/i
+  COPYRIGHT_REGEXP = /Copyright\s+\(C\)\s*(?<pre_year>.*)-?(?<cur_year>\d{4})\s+(?<company>.+)\s+.* rights reserved\.?/i
 
   # Only check files with known checkable extensions
   EXTENSIONS = [
@@ -50,7 +52,7 @@ class CopyrightCheckHook < RubyGitHooks::Hook
       next unless EXTENSIONS.include?(extension)
       next if file_contents[filename] == ""  # for now this is how we recognize a deleted file.
       next if @options["exclude_files"].include? filename
-      if file_contents[filename] =~ COPYRIGHT_REGEXP
+      if file_contents[filename] =~ COPYRIGHT_REGEXP  # TODO: allow passing regexp as an option
         parsed_cur_year = $~["cur_year"]
         parsed_company = $~["company"]
 
@@ -145,7 +147,7 @@ DESCRIPTION
 
     if outdated_notice.size > 0
       description.concat <<DESCRIPTION
-The following files do not list #{cur_year} as the copyright year:
+The following files do not list #{cur_year} as the most recent copyright year:
 
   #{outdated_notice.join("\n  ")}
 -----
