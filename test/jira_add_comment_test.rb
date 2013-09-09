@@ -130,15 +130,19 @@ JSON
     fake_hook_check("Message with CLOSE-123 BAD-456 reference to Jira" )
   end
 
+
   def test_closed_ok_when_not_checking
-    @hook = JiraCommentAddHook.new "host" => "jira.onlive.com",
-                                   "username" => "user", "password" => "password",
-                                   "check_status" => true
+    @hook = JiraCommentAddHook.new "check_status" => false, "host" => "jira.onlive.com",
+                                   "username" => "user", "password" => "password"
 
     mock(RestClient).get("https://user:password@jira.onlive.com/rest/api/latest/issue/CLOSE-123") { <<JSON }
 { "fields": { "status": { "name": "Closed" } } }
 JSON
-    fake_hook_check("Message with CLOSE-123 BAD-456 reference to Jira" )
+    mock(RestClient).post.with_any_args {<<JSON }    # more complicated to check the args, just be sure it's called.
+  { "fields": { "status": { "name": "Open" } } }
+JSON
+
+    fake_hook_check("Message with CLOSE-123 don't check if closed reference to Jira" )
 
 
   end

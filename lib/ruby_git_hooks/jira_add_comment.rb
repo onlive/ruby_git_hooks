@@ -43,8 +43,7 @@ class JiraCommentAddHook < RubyGitHooks::Hook
     @options["host"] ||= "jira"
     @options["api_path"] ||= "rest/api/latest/issue"
     @options["github"] ||= "github.com"
-    @options["check_status"] ||= true   # don't allow "closed" issues by default
-
+    @options["check_status"] = true if !@options.has_key? "check_status"  # don't allow "closed" issues by default
 
     # options for error emailing
 
@@ -216,6 +215,7 @@ class JiraCommentAddHook < RubyGitHooks::Hook
       if @options["check_status"]
         # Grab the Jira bug status, or fall back to allowing
         # if the format is unexpected.
+
         status = hash["fields"]["status"]["name"] rescue "open"
 
         if status.downcase == "closed"
