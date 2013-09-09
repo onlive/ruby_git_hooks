@@ -323,6 +323,11 @@ We make a best effort to support it, but 1.8 is a smoother experience.
 4. Push to the branch (`git push origin my-new-feature`)
 5. Create new Pull Request
 
+## License and Copying
+
+Ruby Git Hooks is released under the MIT License by OL2, Inc.
+Please see the file LICENSE.txt for a copy of this license.
+
 ### Unimplemented, Future: Project-Specific Hooks
 
 Want to have hooks that are specific to a given project?  No problem.

@@ -1,4 +1,4 @@
-Copyright (c) 2013 Noah Gibbs
+Copyright (c) 2013 OL2, Inc.
 
 MIT License
 

@@ -6,8 +6,9 @@ require 'ruby_git_hooks/version'
 Gem::Specification.new do |spec|
   spec.name          = "ruby_git_hooks"
   spec.version       = RubyGitHooks::VERSION
-  spec.authors       = ["Noah Gibbs"]
-  spec.email         = ["noah@onlive.com"]
+  spec.authors       = ["Noah Gibbs", "Ruth Helfinstein", "Alex Snyatkov"]
+  spec.email         = ["noah@onlive.com", "ruth.helfinstein@onlive.com",
+                        "alex.snyatkov@onlive.com"]
   spec.description   = <<DESC
 Ruby_git_hooks is a library to allow easy writing and installing of
 git hooks in Ruby.  It abstracts away the differences between
