@@ -6,14 +6,15 @@ require "ruby_git_hooks/jira_ref_check"
 require "rest-client"
 require "json"
 
-# Called as a post-receive with a list of commits -
-# ideally the ruby_git_hooks framework would allow us to get each commit message from them
-# but for now we'll do it ourselves.
+# This hook adds Jira "commit" comments for your commits.  It is
+# called as a post-receive hook with a list of commits - ideally the
+# ruby_git_hooks framework would allow us to get each commit message
+# from them but for now we'll do it ourselves.
 
-# Check that commit message has one or more valid Jira ticket references
-# and add a comment to the jira ticket(s)
-# Won't be able to reject the commit, just continue to the end and check everything
-# and report errors
+# The hook checks that commit message has one or more valid Jira
+# ticket references.  In general we can't always reject a commit.  So
+# we continue through the list of commits, check everything and report
+# errors.
 
 
 class JiraCommentAddHook < RubyGitHooks::Hook

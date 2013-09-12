@@ -2,6 +2,9 @@
 
 require "ruby_git_hooks"
 
+# This hook sends out email notification of commits to a configurable
+# list of recipients via the Pony gem, which uses the Ruby Mail gem.
+
 class EmailNotifyHook < RubyGitHooks::Hook
   LEGAL_OPTIONS = [ "no_send", "via", "via_options", "max_lines", "recipients" ]
 

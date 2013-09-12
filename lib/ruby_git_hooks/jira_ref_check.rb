@@ -2,7 +2,9 @@
 
 require "ruby_git_hooks"
 
-# Check that commit message has one or more valid Jira ticket references
+# This hook checks that the commit message has one or more valid Jira
+# ticket references.
+
 class JiraReferenceCheckHook < RubyGitHooks::Hook
   Hook = RubyGitHooks::Hook
 

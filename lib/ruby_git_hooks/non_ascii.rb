@@ -2,7 +2,8 @@
 
 require "ruby_git_hooks"
 
-# Check that commit message contains only ASCII characters
+# This hook checks that commit message contains only ASCII characters.
+
 class NonAsciiCharactersCheckHook < RubyGitHooks::Hook
   Hook = RubyGitHooks::Hook
 

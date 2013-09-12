@@ -2,7 +2,9 @@
 
 require "ruby_git_hooks"
 
-# This exists primarily for testing.  I mean, you can use it and all, but...
+# This hook looks for source files that include ruby-debug and fails
+# if any do.  It exists primarily for testing.  It's functional, but
+# not necessarily useful.
 
 class RubyDebugHook < RubyGitHooks::Hook
   def check

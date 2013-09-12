@@ -2,6 +2,11 @@
 
 require "ruby_git_hooks"
 
+# This hook checks the size of each individual file against a
+# configurable maximum size.  Once a huge file is in your git history
+# it can't be fully removed without rewriting history, so you're
+# usually better off preventing them in the first place.
+
 class MaxFileSizeHook < RubyGitHooks::Hook
   DEFAULT_MAX_FILE_SIZE = 10*1024*1024;
   VERBOSE = false

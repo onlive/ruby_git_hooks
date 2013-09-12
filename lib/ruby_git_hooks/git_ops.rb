@@ -1,5 +1,10 @@
 # Copyright (C) 2013 OL2, Inc. See LICENSE.txt for details.
 
+# This is a set of Git operations, run via shell.  It permits much
+# cleaner unit tests.  Initially it was written in this way because it
+# was very small and simple.  Now it should be converted to Grit or a
+# similar tool or library.
+
 module RubyGitHooks; end
 
 module RubyGitHooks::GitOps

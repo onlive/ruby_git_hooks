@@ -2,6 +2,11 @@
 
 require "ruby_git_hooks"
 
+# This hook checks whether a proper copyright notice exists at the top
+# of each of your files.  Right now it hardcodes most of the Copyright
+# notice format, though you can customize the company name.  If you'd
+# prefer a more flexible format, we accept pull requests!
+
 class CopyrightCheckHook < RubyGitHooks::Hook
   COPYRIGHT_REGEXP = /Copyright\s+\(C\)\s*(?<pre_year>.*)-?(?<cur_year>\d{4})\s+(?<company>.+)/i
 

@@ -2,6 +2,12 @@
 
 require "ruby_git_hooks"
 
+# This hook checks whether a similar file exists with the same name
+# except for uppercase/lowercase.  It's useful when Mac OS and Unix
+# people need to coexist in a single Git repository.  You can be sure
+# that the Linux people can't check in files that the Mac people can
+# neither see nor delete.
+
 class CaseClashHook < RubyGitHooks::Hook
   def check
     downcase_hash = {}
