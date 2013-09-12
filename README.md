@@ -70,11 +70,11 @@ require "ruby_git_hooks/case_clash"
 require "ruby_git_hooks/copyright_check"
 
 RubyGitHooks.register CaseClashHook.new
-RubyGitHooks.register CopyrightCheck.new "domain" => "onlive.com",
-       "from" => "OnLive Copyright Reminders",
+RubyGitHooks.register CopyrightCheck.new "domain" => "my_company.com",
+       "from" => "MyCo Inc. Copyright Reminders",
        "via" => {
-                  :address => "smtp.onlive.com",
-                  :domain => "onlive.com"
+                  :address => "smtp.my_company.com",
+                  :domain => "my_company.com"
                 }
 
 RubyGitHooks.run  # Run both
@@ -98,11 +98,11 @@ if RubyGitHooks.current_hook =~ /pre-/
 end
 
 if RubyGitHooks.current_hook =~ /post-/
-  RubyGitHooks.run CopyrightCheck.new "domain" => "onlive.com",
-       "from" => "OnLive Copyright Reminders",
+  RubyGitHooks.run CopyrightCheck.new "domain" => "my_company.com",
+       "from" => "MyCo Inc. Copyright Reminders",
        "via" => {
-                  :address => "smtp.onlive.com",
-                  :domain => "onlive.com"
+                  :address => "smtp.my_company.com",
+                  :domain => "my_company.com"
                 }
 end
 ~~~
@@ -257,9 +257,7 @@ Ruby version managers like rbenv.
 ### It Says It's Not Installed
 
 Sometimes you can get an error saying that ruby_git_hooks isn't
-installed when you try a git operation.  Please see
-bin/onlive_git_hooks for a big chunk of useful diagnostic info you may
-want when debugging this problem.
+installed when you try a git operation.
 
 Simple stuff to try:
 
@@ -327,12 +325,3 @@ We make a best effort to support it, but 1.8 is a smoother experience.
 
 Ruby Git Hooks is released under the MIT License by OL2, Inc.
 Please see the file LICENSE.txt for a copy of this license.
-
-### Unimplemented, Future: Project-Specific Hooks
-
-Want to have hooks that are specific to a given project?  No problem.
-Just create a post-clone hook in ~/.git_hooks that looks for a /.hooks
-directory in the newly-created repo and copies the hooks into
-~/.git_hooks.  Note that for now these hooks will then *override* your
-personal ones.  Eventually we'd prefer to merge them, but that's not
-easy...  Yet.

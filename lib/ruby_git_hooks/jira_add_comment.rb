@@ -91,26 +91,26 @@ class JiraCommentAddHook < RubyGitHooks::Hook
 
   def repo_remote_path
     remote_urls = RubyGitHooks::Hook.shell!("git remote -v").split
-    remote = remote_urls[1]  # ["origin", "git@github.onlive.com:Engineering/ruby_git_hooks.git", "fetch", ...]
+    remote = remote_urls[1]  # ["origin", "git@github.com:my_github_name/ruby_git_hooks.git", "fetch", ...]
     return "" if !remote   # No remote.
 
     uri = URI.parse(remote) rescue nil
     if uri
-      #  "https://github.onlive.com/Engineering/ruby_git_hooks.git "
+      #  "https://github.com/my_github_name/ruby_git_hooks.git "
       uri.to_s.sub(/.git\z/, "")
     else
-      # "git@github.onlive.com:Engineering/ruby_git_hooks.git"
+      # "git@github.com:my_github_name/ruby_git_hooks.git"
       # ?? Can there be a "." in a repo name?
       path = remote[/:([\w\/.-]*)/,1]
       path.sub!(/.git\z/, "") if path
       "#{@options['protocol']}://#{@options['github']}/#{path}"
     end
-    # in either case return "https://github.onlive.com/Engineering/ruby_git_hooks"
+    # in either case return "https://github.com/my_github_name/ruby_git_hooks"
 
   end
 
   def build_commit_uri(commit)
-    # like https://github.onlive.com/Engineering/ruby_git_hooks/commit/b067c718a74315224bf88a267a82ac85054cdf6e
+    # like https://github.com/my_github_name/ruby_git_hooks/commit/b067c718a74315224bf88a267a82ac85054cdf6e
 
     uri = "#{repo_remote_path}/commit/#{commit}"
   end
@@ -134,16 +134,16 @@ class JiraCommentAddHook < RubyGitHooks::Hook
 
   def get_comment_content(commit, commit_message)
     #  Needs to look like the git equivalent of this
-    #/opt/svn/ops rev 37251 committed by andy.lee      (commit shah and committer)
-    #http://viewvc.onlive.net/viewvc/ops?rev=37251&view=rev   (github link)
-    #NOC-3863 adding check to configs for testing    (commit message and changes)
+    #/opt/svn/ops rev 37251 committed by john.doe      (commit shah and committer)
+    #http://viewvc.example.com/viewvc/ops?rev=37251&view=rev   (github link)
+    #BUG-3863 adding check to configs for testing    (commit message and changes)
     #                                   U /trunk/puppet/dist/nagios/nrpe.cfg
     #                                   U /trunk/puppet/dist/nagios/ol_checks.cfg
     # return as a string
     # revision bac9b85f2 committed by Ruth Helfinstein
     # Fri Jul 12 13:57:28 2013 -0700
-    # https://github.onlive.com/ruth-helfinstein/ruth-test/commit/bac9b85f2c98ccdba8d25f0b9a6e855cd2535901
-    # SYSINT-5366 commit message
+    # https://github.com/ruth-helfinstein/ruth-test/commit/bac9b85f2c98ccdba8d25f0b9a6e855cd2535901
+    # BUG-5366 commit message
     #
     # M	test.txt
 

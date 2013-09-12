@@ -38,3 +38,8 @@
   For example most hooks are called with GIT_DIR set to .git and the working directory
   set to the repo root BUT pre and post-receive are called with GIT_DIR set to '.' 
   and the working directory set to <repo root>/.git.  
+
+* Project-specific hooks.  Right now, create a post-clone hook in
+  ~/.git_hooks that looks for a /.hooks directory in the newly-created
+  repo and copies the hooks into ~/.git_hooks.  Note that for now
+  these hooks will then *override* your personal ones.  TODO: merge them.

@@ -13,8 +13,8 @@ class RealCopyrightCheckHookTest < HookTestCase
 #{RubyGitHooks.shebang}
 require "ruby_git_hooks/copyright_check"
 
-RubyGitHooks.register CopyrightCheckHook.new("domain" => "onlive.com",
-  "from" => "Copyright Enforcement <noreply@onlive.com>",
+RubyGitHooks.register CopyrightCheckHook.new("domain" => "example.com",
+  "from" => "Copyright Enforcement <noreply@example.com>",
   "via" => :sendmail,
   "via_options" => {
     :location => #{FAKE_MAILER.inspect},
@@ -29,8 +29,8 @@ TEST
 #{RubyGitHooks.shebang}
 require "ruby_git_hooks/copyright_check"
 
-RubyGitHooks.register CopyrightCheckHook.new("domain" => "onlive.com",
-  "from" => "Copyright Enforcement <noreply@onlive.com>",
+RubyGitHooks.register CopyrightCheckHook.new("domain" => "example.com",
+  "from" => "Copyright Enforcement <noreply@example.com>",
   "company_check" => /YoYoDyne (Industries)?/i,
   "via" => :sendmail,
   "via_options" => {
@@ -53,8 +53,8 @@ TEST
 #{RubyGitHooks.shebang}
 require "ruby_git_hooks/copyright_check"
 
-RubyGitHooks.register CopyrightCheckHook.new("domain" => "onlive.com",
-  "from" => "Copyright Enforcement <noreply@onlive.com>",
+RubyGitHooks.register CopyrightCheckHook.new("domain" => "example.com",
+  "from" => "Copyright Enforcement <noreply@example.com>",
   "via" => :sendmail,
   "via_options" => {
     :location => #{FAKE_MAILER.inspect},

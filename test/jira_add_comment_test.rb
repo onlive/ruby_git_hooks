@@ -28,7 +28,7 @@ class JiraCommentAddHookTest < HookTestCase
     new_commit "child_repo", "README"
     git_push
     # add_hook("parent_repo.git", "post-receive", TEST_HOOK)   # can't do this
-    @hook = JiraCommentAddHook.new "host" => "jira.onlive.com",
+    @hook = JiraCommentAddHook.new "host" => "jira.example.com",
                                        "username" => "user", "password" => "password"
   end
 
@@ -61,7 +61,7 @@ class JiraCommentAddHookTest < HookTestCase
   def test_bad_reference
     dont_allow(JiraCommentAddHook).add_comment   # check that no comments are added
                                                          # because there are no valid tickets
-    mock(RestClient).get("https://user:password@jira.onlive.com/rest/api/latest/issue/BAD-234") do
+    mock(RestClient).get("https://user:password@jira.example.com/rest/api/latest/issue/BAD-234") do
       exc = RestClient::Exception.new
       mock(exc).http_code.at_least(1) { 404 }
       raise exc
@@ -75,7 +75,7 @@ class JiraCommentAddHookTest < HookTestCase
 
 
   def test_good_reference
-    mock(RestClient).get("https://user:password@jira.onlive.com/rest/api/latest/issue/GOOD-234") { <<JSON }
+    mock(RestClient).get("https://user:password@jira.example.com/rest/api/latest/issue/GOOD-234") { <<JSON }
 { "fields": { "status": { "name": "Open" } } }
 JSON
 
@@ -90,20 +90,20 @@ JSON
 
 
   def test_multiple_references_with_good
-    mock(RestClient).get("https://user:password@jira.onlive.com/rest/api/latest/issue/GOOD-234") { <<JSON }
+    mock(RestClient).get("https://user:password@jira.example.com/rest/api/latest/issue/GOOD-234") { <<JSON }
 { "fields": { "status": { "name": "Open" } } }
 JSON
-    mock(RestClient).get("https://user:password@jira.onlive.com/rest/api/latest/issue/BAD-456") do
+    mock(RestClient).get("https://user:password@jira.example.com/rest/api/latest/issue/BAD-456") do
       exc = RestClient::Exception.new
       mock(exc).http_code.at_least(1) { 404 }
       raise exc
     end
-    mock(RestClient).get("https://user:password@jira.onlive.com/rest/api/latest/issue/NOT-123") do
+    mock(RestClient).get("https://user:password@jira.example.com/rest/api/latest/issue/NOT-123") do
       exc = RestClient::Exception.new
       mock(exc).http_code.at_least(1) { 404 }
       raise exc
     end
-    mock(RestClient).get("https://user:password@jira.onlive.com/rest/api/latest/issue/CLOSE-123") { <<JSON }
+    mock(RestClient).get("https://user:password@jira.example.com/rest/api/latest/issue/CLOSE-123") { <<JSON }
 { "fields": { "status": { "name": "Closed" } } }
 JSON
 
@@ -119,12 +119,12 @@ JSON
   def test_multiple_references_none_good
     dont_allow(JiraCommentAddHook).add_comment   # check that no comments are added
                                                  # because there are no valid tickets
-    mock(RestClient).get("https://user:password@jira.onlive.com/rest/api/latest/issue/BAD-456") do
+    mock(RestClient).get("https://user:password@jira.example.com/rest/api/latest/issue/BAD-456") do
       exc = RestClient::Exception.new
       mock(exc).http_code.at_least(1) { 404 }
       raise exc
     end
-    mock(RestClient).get("https://user:password@jira.onlive.com/rest/api/latest/issue/CLOSE-123") { <<JSON }
+    mock(RestClient).get("https://user:password@jira.example.com/rest/api/latest/issue/CLOSE-123") { <<JSON }
 { "fields": { "status": { "name": "Closed" } } }
 JSON
     fake_hook_check("Message with CLOSE-123 BAD-456 reference to Jira" )
@@ -132,10 +132,10 @@ JSON
 
 
   def test_closed_ok_when_not_checking
-    @hook = JiraCommentAddHook.new "check_status" => false, "host" => "jira.onlive.com",
+    @hook = JiraCommentAddHook.new "check_status" => false, "host" => "jira.example.com",
                                    "username" => "user", "password" => "password"
 
-    mock(RestClient).get("https://user:password@jira.onlive.com/rest/api/latest/issue/CLOSE-123") { <<JSON }
+    mock(RestClient).get("https://user:password@jira.example.com/rest/api/latest/issue/CLOSE-123") { <<JSON }
 { "fields": { "status": { "name": "Closed" } } }
 JSON
     mock(RestClient).post.with_any_args {<<JSON }    # more complicated to check the args, just be sure it's called.
