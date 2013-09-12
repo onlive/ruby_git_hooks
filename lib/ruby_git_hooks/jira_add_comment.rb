@@ -6,8 +6,6 @@ require "ruby_git_hooks/jira_ref_check"
 require "rest-client"
 require "json"
 
-# TODO: allow passing in list of legal issue statuses
-
 # Called as a post-receive with a list of commits -
 # ideally the ruby_git_hooks framework would allow us to get each commit message from them
 # but for now we'll do it ourselves.
@@ -254,8 +252,6 @@ class JiraCommentAddHook < RubyGitHooks::Hook
     rescue
       STDERR.puts "Unexpected exception: #{$!.inspect}!"
       return false
-
-      # TODO: rescue DNS error, allow but nag
     end
     false # if we get to this point it's not a valid ticket
   end

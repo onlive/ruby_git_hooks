@@ -1,6 +1,10 @@
-* Debug various cases for first commit in new repo.
+* Move this file's contents into GitHub issues, once we have a public GitHub repo for it.
 
-* Grit
+* Convert to using Grit in git_ops.rb
+
+* Do on-demand loading of Git information, so if no hook uses an
+  expensive Git operation, it can be skipped.  The API allows it but
+  the implementation isn't in place yet.
 
 * "Illegal content" hook -- for catching incomplete merges (">>>>>>"), etc.
 
@@ -10,10 +14,6 @@
   criteria.  Then you can't rebase in a new file if it would violate
   the CaseClashHook, say.
 
-* Document built-in hooks like CopyrightCheck
-
-* Document, document, document
-
 * A hook should have default hook types and file extensions and
   git-hook names, and should only run if those match -- or if
   registered with an overrriding git-hook name or file type.
@@ -22,6 +22,8 @@
   string/symbol checking there.
 
 * Print message if a hook is registered but run is never called.
+
+* Use SimpleCov to check coverage in test_helper.rb
 
 * Have a simple way to "forward" to another file.  That is, save the
   arguments and STDIN and call another file with the same arguments
@@ -43,3 +45,23 @@
   ~/.git_hooks that looks for a /.hooks directory in the newly-created
   repo and copies the hooks into ~/.git_hooks.  Note that for now
   these hooks will then *override* your personal ones.  TODO: merge them.
+
+* Where tests have "assert_raises RuntimeError", find a more specific
+  error.  This occurs in several places.
+
+* In copyright_check_hook, use regexp#scan instead of first match.
+
+* In copyright_check_hook, allow passing the top-level regexp/check as
+  an option.  This will require documenting that it overrides some other
+  things like the company check option.
+
+* In jira_ref_check_hook, allow passing in list of legal statuses.
+
+* In jira_ref_check_hook and jira_add_comment_hook, figure out how to
+  deal with checking with the server to see if a bug is real and
+  valid.  This will be a tricky UI issue.
+
+* In jira_add_comment_hook, rescue DNS errors for VPN setups.  Allow
+  the commit, but print a message.
+
+* In ruby_git_hooks.rb, have "shell!" capture both STDOUT and STDERR.

@@ -39,7 +39,6 @@ TEST
     new_commit "child_repo", "BigFile.txt", nil
 
     # Should reject w/ pre-commit hook
-    # TODO: check error more specifically
     assert_raises RuntimeError do
       git_push
     end

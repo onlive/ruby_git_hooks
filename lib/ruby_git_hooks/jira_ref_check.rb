@@ -2,8 +2,6 @@
 
 require "ruby_git_hooks"
 
-# TODO: allow passing in list of legal issue statuses
-
 # Check that commit message has one or more valid Jira ticket references
 class JiraReferenceCheckHook < RubyGitHooks::Hook
   Hook = RubyGitHooks::Hook
@@ -26,7 +24,6 @@ class JiraReferenceCheckHook < RubyGitHooks::Hook
       return false
     end
 
-    #TODO: actually check with the jira server to check if valid ticket reference
     return true
   end
 

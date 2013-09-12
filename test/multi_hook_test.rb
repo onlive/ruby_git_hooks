@@ -53,7 +53,6 @@ FILE_CONTENTS
       "Multiple pre-commit should accept legal commit."
     last_sha = last_commit_sha  # update
 
-    # TODO: check more specifically
     assert_raises RuntimeError do
       new_commit("child_repo", "myfile.rb", <<FILE_CONTENTS)
 # No copyright notice, but no ruby-debug
@@ -63,7 +62,6 @@ FILE_CONTENTS
     assert_equal last_sha, last_commit_sha,
       "Multiple pre-commit should refuse illegal commit (1)."
 
-    # TODO: check more specifically
     assert_raises RuntimeError do
       new_commit("child_repo", "myfile.rb", <<FILE_CONTENTS)
 # Includes a copyright notice, but has ruby-debug

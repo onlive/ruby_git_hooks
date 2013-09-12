@@ -2,14 +2,10 @@
 
 require "ruby_git_hooks/version"
 
-# TODO: load this stuff on demand.  Eventually it will be crushingly expensive
-# to fully pre-fetch all filenames, changed files, diffs, etc.  For right now,
-# screw it, it's a prototype.  The API will work fine when the implementation
-# gets fixed up.
-
-# TODO: wrap git calls in some saner way.  Grit would be saner than this.
-
-# TODO: store file status in addition to names of files_changed
+# This module is the core of the ruby_git_hooks code.  It includes the
+# Git commands, the hook types and in general most of the interface.
+# README.md is the best overall documentation for this package, but
+# this is where you can dig into the lowest-level Git specifics.
 
 module RubyGitHooks
   # This isn't all hook names, just the ones we already support.
@@ -311,9 +307,6 @@ ERR
       #end
     end
 
-    # TODO: This should capture both output channels,
-    # check better for failure, possibly do more shell
-    # parsing...
     def self.shell!(*args)
       output = `#{args.join(" ")}`
 

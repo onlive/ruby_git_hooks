@@ -1,7 +1,5 @@
 # Copyright (C) 2013 OL2, Inc. See LICENSE.txt for details.
 
-# TODO: coverage?
-
 # Test local copy first
 $LOAD_PATH.unshift File.join(File.dirname(__FILE__), "..", "lib")
 

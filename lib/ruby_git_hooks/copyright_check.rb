@@ -39,7 +39,6 @@ class CopyrightCheckHook < RubyGitHooks::Hook
     @cur_year = Time.now.strftime("%Y")
   end
 
-  # TODO: use Regexp#scan instead of just the first match
   def check
     no_notice = []
     outdated_notice = []
@@ -52,7 +51,7 @@ class CopyrightCheckHook < RubyGitHooks::Hook
       next unless EXTENSIONS.include?(extension)
       next if file_contents[filename] == ""  # for now this is how we recognize a deleted file.
       next if @options["exclude_files"].include? filename
-      if file_contents[filename] =~ COPYRIGHT_REGEXP  # TODO: allow passing regexp as an option
+      if file_contents[filename] =~ COPYRIGHT_REGEXP
         parsed_cur_year = $~["cur_year"]
         parsed_company = $~["company"]
 
