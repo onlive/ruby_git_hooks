@@ -90,4 +90,7 @@ module RubyGitHooks::GitOps
     Hook.shell!("cd #{repo_name} && git log -1").chomp
   end
 
+  def git_tag(repo_name="child_repo", tagname="0.1")
+    Hook.shell! "cd #{repo_name} && git tag -a #{tagname} -m 'test'"
+  end
 end

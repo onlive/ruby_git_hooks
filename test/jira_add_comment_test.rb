@@ -82,10 +82,28 @@ JSON
     mock(RestClient).post.with_any_args {<<JSON }      # more complicated to check the args, just be sure it's called.
 { "fields": { "status": { "name": "Open" } } }
 JSON
-
+    git_tag("child_repo", "0.1")
     fake_hook_check("Message with GOOD-234 reference to Jira" )
 
     # as long as the mocked RestClient calls happen, we succeeded
+    # would be better if we had a way to check if the tag is in the message
+    # but at least we'll make sure it doesn't fail.
+  end
+
+  def test_good_reference_with_description
+
+    mock(RestClient).get("https://user:password@jira.example.com/rest/api/latest/issue/GOOD-234") { <<JSON }
+{ "fields": { "status": { "name": "Open" } } }
+JSON
+
+    mock(RestClient).post.with_any_args {<<JSON }      # more complicated to check the args, just be sure it's called.
+{ "fields": { "status": { "name": "Open" } } }
+JSON
+    # add a tag so describe works
+
+    fake_hook_check("Message with GOOD-234 reference to Jira" )
+
+
   end
 
 
@@ -146,6 +164,8 @@ JSON
 
 
   end
+
+
 
 
 end
