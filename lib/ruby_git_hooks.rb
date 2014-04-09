@@ -1,4 +1,4 @@
-# Copyright (C) 2013 OL2, Inc. See LICENSE.txt for details.
+# Copyright (C) 2013-2014 OL2, Inc. See LICENSE.txt for details.
 
 require "ruby_git_hooks/version"
 
@@ -46,19 +46,24 @@ module RubyGitHooks
       # All filenames in repo
       attr_accessor :ls_files
 
-      # All current commits (sometimes empty)
-      attr_accessor :commits
-
       # Commit message for current commit
       attr_accessor :commit_message
 
       # Commit message file for current commit
       attr_accessor :commit_message_file
+
+      # the following are for hooks which involve multiple commits (pre-receive, post-receive):
+      # (may be empty in other hooks)
+      # All current commits
+      attr_accessor :commits
+
+      # refs associated with each commit
+      attr_accessor :commit_ref_map
     end
 
     # Instances of Hook delegate these methods to the class methods.
     HOOK_INFO = [ :files_changed, :file_contents, :file_diffs, :ls_files,
-                  :commits, :commit_message, :commit_message_file ]
+                  :commits, :commit_message, :commit_message_file, :commit_ref_map ]
     HOOK_INFO.each do |info_method|
       define_method(info_method) do |*args, &block|
         Hook.send(info_method, *args, &block)
@@ -71,10 +76,11 @@ module RubyGitHooks
       "pre-receive" => proc {
         changes = []
         STDIN.each_line do |line|
+          # STDERR.puts line # for debugging
           base, commit, ref = line.strip.split
           changes.push [base, commit, ref]
         end
-        self.commits = []
+        self.commit_ref_map = {}  # {commit1 => [ref1, ref2], commit2 => [ref1]}
 
         self.files_changed = []
         self.file_contents = {}
@@ -109,13 +115,19 @@ module RubyGitHooks
           end
           commit_range  = no_base ? commit : "#{base}..#{commit}"
           new_commits = Hook.shell!("git log --pretty=format:%H #{commit_range}").split("\n")
-          self.commits = self.commits | new_commits
+          new_commits.each do |one_commit|
+            self.commit_ref_map[one_commit] ||= [];
+            self.commit_ref_map[one_commit] << ref  # name of the branch associated with this commit
+          end
         end
+
+        self.commits = self.commit_ref_map.keys
+        puts self.commit_ref_map.inspect
 
         if !self.commits.empty?
             file_list_revision =  self.commits.first # can't just use HEAD - remote may be on branch with no HEAD
             self.ls_files = Hook.shell!("git ls-tree --full-tree --name-only -r #{file_list_revision}").split("\n")
-          # TODO should store ls_files per commit and ls_files with branch name (in case commits on multiple branches)?
+          # TODO should store ls_files per commit (with status)?
         end
 
 
@@ -286,7 +298,6 @@ ERR
           "any of: #{HOOK_NAMES.inspect}"
         exit 1
       end
-
       unless HOOK_TYPE_SETUP[@run_as_hook]
         STDERR.puts "No setup defined for hook type #{@run_as_hook.inspect}!"
         exit 1

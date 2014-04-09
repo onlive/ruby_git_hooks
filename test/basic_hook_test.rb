@@ -1,4 +1,4 @@
-# Copyright (C) 2013 OL2, Inc. See LICENSE.txt for details.
+# Copyright (C) 2013-2014 OL2, Inc. See LICENSE.txt for details.
 
 require "test_helper"
 
@@ -35,6 +35,24 @@ class TestHook < RubyGitHooks::Hook
       f.puts commit_message
     end
     
+    puts "Test hook runs!"
+    true
+  end
+end
+
+RubyGitHooks.run TestHook.new
+HOOK
+
+  TEST_HOOK_MULTI = <<HOOK
+#{RubyGitHooks.shebang}
+require "ruby_git_hooks"
+
+class TestHook < RubyGitHooks::Hook
+  def check
+    File.open("#{TEST_PATH}", "w") do |f|
+      f.puts commit_ref_map.inspect
+    end
+
     puts "Test hook runs!"
     true
   end
@@ -101,6 +119,27 @@ HOOK
       "No file contents reached pre-receive hook!"
   end
 
+  def test_multiple_pre_receive
+    add_hook("parent_repo.git", "pre-receive", TEST_HOOK_MULTI)
+
+    new_single_file_commit "child_repo"
+
+    git_create_and_checkout_branch("child_repo", "B1")
+    new_single_file_commit "child_repo"
+    git_push_all("child_repo")  # pushes multiple branches
+
+    assert File.exist?(TEST_PATH), "Test pre-receive hook didn't run!"
+
+    commits =  git_revlist("child_repo")  # will give us all the commits, compare to output in file
+    commits =  git_revlist("child_repo")  # will give us all the commits, compare to output in file
+    contents = File.read(TEST_PATH)
+    commits.each do |c|
+      assert contents.include?(c), "Missing commit info for #{c} in pre-receive hook!"
+    end
+    assert contents.include?("B1")
+    assert contents.include?("master")
+  end
+
 
   def test_pre_receive_with_delete
     add_hook("parent_repo.git", "pre-receive", TEST_HOOK_BODY)
@@ -108,11 +147,9 @@ HOOK
     new_commit "child_repo", "file_to_delete"
     git_push "child_repo"
 
-    
     git_delete "child_repo", "file_to_delete"
     git_commit "child_repo", "Deleted file_to_delete"
     git_push "child_repo"
-
 
     assert File.exist?(TEST_PATH), "Test pre-receive hook didn't run!"
     assert File.read(TEST_PATH).include?('"file_to_delete"=>""'),

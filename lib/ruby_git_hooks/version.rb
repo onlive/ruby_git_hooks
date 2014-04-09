@@ -1,5 +1,5 @@
-# Copyright (C) 2013 OL2, Inc. See LICENSE.txt for details.
+# Copyright (C) 2013-2014 OL2, Inc. See LICENSE.txt for details.
 
 module RubyGitHooks
-  VERSION = "0.0.33"
+  VERSION = "0.0.34"
 end

@@ -1,4 +1,4 @@
-# Copyright (C) 2013 OL2, Inc. See LICENSE.txt for details.
+# Copyright (C) 2013-2014 OL2, Inc. See LICENSE.txt for details.
 
 # This is a set of Git operations, run via shell.  It permits much
 # cleaner unit tests.  Initially it was written in this way because it
@@ -57,7 +57,6 @@ module RubyGitHooks::GitOps
 
     @single_file_counter += 1
   end
-    system("git mv child_repo/file_to_rename child_repo/renamed_file")
 
   def git_delete(repo_name="child_repo", filename="file_to_delete")  
     # filename is a file that has already been added and commited to the repo
@@ -93,4 +92,21 @@ module RubyGitHooks::GitOps
   def git_tag(repo_name="child_repo", tagname="0.1")
     Hook.shell! "cd #{repo_name} && git tag -a #{tagname} -m 'test'"
   end
+
+  def git_checkout(repo_name="child_repo", branch_name="master")
+    Hook.shell! "cd #{repo_name} && git checkout #{branch_name}"
+  end
+
+  def git_create_and_checkout_branch(repo_name="child_repo", branch_name="B1")
+    Hook.shell! "cd #{repo_name} && git checkout -b #{branch_name}"
+  end
+
+  def git_push_all(repo_name = "child_repo")
+    Hook.shell! "cd #{repo_name} && git push --all"
+  end
+
+  def git_revlist(repo_name = "child_repo")
+    Hook.shell!("cd #{repo_name} && git rev-list HEAD").split("\n")
+  end
+
 end

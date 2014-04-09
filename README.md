@@ -254,6 +254,14 @@ Ruby version managers like rbenv.
 
 ## Troubleshooting
 
+### Running our tests
+For now, to run the tests you need to be sure to have the latest code
+actually installed.
+
+* gem build ruby_git_hooks.gemspec
+* gem install ruby_git_hooks-0.0.34.gem (but use your real file name)
+* rake test
+
 ### It Says It's Not Installed
 
 Sometimes you can get an error saying that ruby_git_hooks isn't

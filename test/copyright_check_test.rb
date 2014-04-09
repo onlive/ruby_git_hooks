@@ -1,4 +1,4 @@
-# Copyright (C) 2013 OL2, Inc. See LICENSE.txt for details.
+# Copyright (C) 2013-2014 OL2, Inc. See LICENSE.txt for details.
 
 require "test_helper"
 
@@ -9,6 +9,7 @@ class RealCopyrightCheckHookTest < HookTestCase
   REPOS_DIR = File.expand_path File.join(File.dirname(__FILE__), "repos")
   FAKE_MAILER = File.join(File.dirname(__FILE__), "fake_mailer")
   MAILER_FILE = File.join(File.dirname(__FILE__), "mail_params")
+  CURRENT_YEAR = Time.now.strftime("%Y")
   TEST_HOOK_BASIC = <<TEST
 #{RubyGitHooks.shebang}
 require "ruby_git_hooks/copyright_check"
@@ -115,7 +116,7 @@ FILE_CONTENTS
     add_hook("child_repo", "post-commit", TEST_HOOK_BASIC)
 
     new_commit("child_repo", "correct_file.rb", <<FILE_CONTENTS)
-# Copyright (C) 1941-2013 YoyoDyne, Inc.  All Rights Reserved.
+# Copyright (C) 1941-#{CURRENT_YEAR} YoyoDyne, Inc.  All Rights Reserved.
 FILE_CONTENTS
 
     assert !File.exist?(MAILER_FILE), "Copyright test must not send email!"
@@ -125,7 +126,7 @@ FILE_CONTENTS
     add_hook("child_repo", "post-commit", TEST_HOOK_COMPANY)
 
     new_commit("child_repo", "correct_file.rb", <<FILE_CONTENTS)
-# Copyright (C) 1941-2013 YoyoDyne Industries  All Rights Reserved.
+# Copyright (C) 1941-#{CURRENT_YEAR} YoyoDyne Industries  All Rights Reserved.
 FILE_CONTENTS
 
     assert !File.exist?(MAILER_FILE), "Copyright test must not send email!"
@@ -135,7 +136,7 @@ FILE_CONTENTS
     add_hook("child_repo", "post-commit", TEST_HOOK_COMPANY)
 
     new_commit("child_repo", "correct_file.rb", <<FILE_CONTENTS)
-# Copyright (C) 1941-2013 YoyoWrong  All Rights Reserved.
+# Copyright (C) 1941-#{CURRENT_YEAR} YoyoWrong  All Rights Reserved.
 FILE_CONTENTS
 
     assert File.exist?(MAILER_FILE), "Must email about wrong company name!"
@@ -145,10 +146,20 @@ FILE_CONTENTS
     add_hook("child_repo", "post-commit", TEST_HOOK_BASIC)
 
     new_commit("child_repo", "correct_file_single_year.rb", <<FILE_CONTENTS)
-# Copyright (C) 2013 YoyoDyne, Inc.  All Rights Reserved.
+# Copyright (C) #{CURRENT_YEAR} YoyoDyne, Inc.  All Rights Reserved.
 FILE_CONTENTS
 
     assert !File.exist?(MAILER_FILE), "Copyright test must not send email!"
+  end
+
+  def test_copyright_wrong_year
+    add_hook("child_repo", "post-commit", TEST_HOOK_COMPANY)
+
+    new_commit("child_repo", "correct_file.rb", <<FILE_CONTENTS)
+# Copyright (C) 2012 YoyoDyne, Inc.  All Rights Reserved.
+FILE_CONTENTS
+
+    assert File.exist?(MAILER_FILE), "Must email about wrong date!"
   end
 
   def test_copyright_exclude_files

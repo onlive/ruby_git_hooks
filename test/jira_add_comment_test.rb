@@ -1,4 +1,4 @@
-# Copyright (C) 2013 OL2, Inc. See LICENSE.txt for details.
+# Copyright (C) 2013-2014 OL2, Inc. See LICENSE.txt for details.
 
 require "test_helper"
 require "ruby_git_hooks/jira_add_comment"
@@ -37,6 +37,7 @@ class JiraCommentAddHookTest < HookTestCase
     stub(@hook).commit_message { msg }
     sha = last_commit_sha("child_repo")
     stub(@hook).commits{[sha]}
+    stub(@hook).commit_ref_map{  {sha => ["refs/heads/master"]} }  # it's always the master branch
     Dir.chdir("child_repo") do
       @hook.check
     end
@@ -60,7 +61,7 @@ class JiraCommentAddHookTest < HookTestCase
 
   def test_bad_reference
     dont_allow(JiraCommentAddHook).add_comment   # check that no comments are added
-                                                         # because there are no valid tickets
+                                                 # because there are no valid tickets
     mock(RestClient).get("https://user:password@jira.example.com/rest/api/latest/issue/BAD-234") do
       exc = RestClient::Exception.new
       mock(exc).http_code.at_least(1) { 404 }

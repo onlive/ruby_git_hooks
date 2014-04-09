@@ -1,4 +1,4 @@
-# Copyright (C) 2013 OL2, Inc. See LICENSE.txt for details.
+# Copyright (C) 2013-2014 OL2, Inc. See LICENSE.txt for details.
 
 require "ruby_git_hooks"
 require "ruby_git_hooks/jira_ref_check"
@@ -131,6 +131,14 @@ class JiraCommentAddHook < RubyGitHooks::Hook
     files_with_status
   end
 
+  def get_commit_branch(commit)
+    # get the branch (list) for this commit
+    # will usually be a single ref ([refs/heads/branch_name]). but could
+    # theoretically be multiple if single commit is on several branches processed at the same time.
+    refs = self.commit_ref_map[commit]
+    refs ? refs.join(" ") : ""
+  end
+
   def get_comment_content(commit, commit_message)
     #  Needs to look like the git equivalent of this
     #/opt/svn/ops rev 37251 committed by john.doe      (commit shah and committer)
@@ -150,12 +158,13 @@ class JiraCommentAddHook < RubyGitHooks::Hook
      changes = get_change_list(commit)
 
      revision_and_date = Hook.shell!("git log #{commit} -1 --pretty='Revision: %h committed by %cn%nCommit date: %cd'") rescue ""
-     desc = Hook.shell!("git describe --long --match '[!z]*'") rescue nil
+     branch = "Branch: #{get_commit_branch(commit)}\n"
+     desc = Hook.shell!("git describe --long --match '[!z]*' --always") rescue nil
      if desc
        desc = "Tag description: #{desc}"
      end
 
-    text = "#{revision_and_date}#{desc}#{github_link}\n\n#{commit_message}\n{noformat}#{changes}{noformat}"
+    text = "#{revision_and_date}#{branch}#{desc}#{github_link}\n\n#{commit_message}\n{noformat}#{changes}{noformat}"
   end
 
   def check_one_commit(commit, commit_message)
@@ -266,7 +275,7 @@ class JiraCommentAddHook < RubyGitHooks::Hook
     # (it looks scary when there's a lot)
     # when there's only one, just return the commit
     # when more than one return first_commit..last_commit
-    # use the shortened SHAH1 for readability
+    # use the shortened SHA-1 for readability
     return "" if !self.commits || self.commits.empty?
 
     if self.commits.size == 1

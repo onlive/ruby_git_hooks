@@ -1,4 +1,4 @@
-# Copyright (C) 2013 OL2, Inc. See LICENSE.txt for details.
+# Copyright (C) 2013-2014 OL2, Inc. See LICENSE.txt for details.
 
 require "test_helper"
 
@@ -11,7 +11,7 @@ class MaxFileSizeHookTest < HookTestCase
 #{RubyGitHooks.shebang}
 require "ruby_git_hooks/max_file_size"
 
-RubyGitHooks.run MaxFileSizeHook.new(MAX_SIZE)
+RubyGitHooks.run MaxFileSizeHook.new(#{MAX_SIZE})
 TEST
 
   def setup
