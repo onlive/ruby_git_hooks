@@ -159,12 +159,8 @@ class JiraCommentAddHook < RubyGitHooks::Hook
 
      revision_and_date = Hook.shell!("git log #{commit} -1 --pretty='Revision: %h committed by %cn%nCommit date: %cd'") rescue ""
      branch = "Branch: #{get_commit_branch(commit)}\n"
-     desc = Hook.shell!("git describe --long --match '[!z]*' --always") rescue nil
-     if desc
-       desc = "Tag description: #{desc}"
-     end
 
-    text = "#{revision_and_date}#{branch}#{desc}#{github_link}\n\n#{commit_message}\n{noformat}#{changes}{noformat}"
+    text = "#{revision_and_date}#{branch}#{github_link}\n\n#{commit_message}\n{noformat}#{changes}{noformat}"
   end
 
   def check_one_commit(commit, commit_message)
