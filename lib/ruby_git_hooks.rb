@@ -80,20 +80,36 @@ module RubyGitHooks
           base, commit, ref = line.strip.split
           changes.push [base, commit, ref]
         end
-        self.commit_ref_map = {}  # {commit1 => [ref1, ref2], commit2 => [ref1]}
+        self.commit_ref_map = {}  #
+        # commit_ref_map is a list of which new commits are in this push, and which branches they are associated with
+        # as {commit1 => [ref1, ref2], commit2 => [ref1]}
+        # For existing branches, this information is sent in directly "base commit ref"
+        # BUT for branch new branches, the pre/post-receive hook gets "0 commit ref"
+
+        new_branches = changes.select{|base, _, _ | base =~  /\A0+\z/ }.collect{|_,_, ref| ref[/refs\/heads\/(\S+)/,1] }
+
+        if !new_branches.empty?
+          # For new branches, we will calculate which commits are new by specifically not including commits which are
+          # present in any other branch (and therefore will have been processed with that branch)
+          all_branches = Hook.shell!("git branch").split(/\W+/).select{|b| !b.empty?}  # remove spaces and the *
+          # ref is like refs/heads/<branch_name>
+          existing_branches = all_branches - new_branches
+          exclude_branches = existing_branches.inject("") {|str, b| str + " ^" + b} # "^B1 ^B2"
+        end
+
 
         self.files_changed = []
         self.file_contents = {}
         self.file_diffs = {}
 
         changes.each do |base, commit, ref|
-          no_base = false
-          if base =~  /\A0+\z/
-            # if base is 000... (initial commit), then all files were added, and git diff won't work
-            no_base = true
-            files_with_status = Hook.shell!("git ls-tree --name-status -r #{commit}").split("\n")
-            # put the A at the front
-            files_with_status.map!{|filename| "A\t" + filename}
+          new_branch = base =~  /\A0+\z/
+          if new_branch
+            # if base is 000 then this is a new branch and we have no easy way know what files were added
+            # TODO: we could figure it out based on the branch commit calculations (see below)
+            # BUT for now just don't include files changed in a new branch
+            # because really this should be done per commit or at least per branch anyway
+            files_with_status = []
           else
             files_with_status = Hook.shell!("git diff --name-status #{base}..#{commit}").split("\n")
           end
@@ -113,8 +129,20 @@ module RubyGitHooks
               file_contents[file_changed] = ""
             end
           end
-          commit_range  = no_base ? commit : "#{base}..#{commit}"
-          new_commits = Hook.shell!("git log --pretty=format:%H #{commit_range}").split("\n")
+
+          # now calculate which commits are new
+          if new_branch
+            # new branch, but we don't want to include all commits from beginning of time
+            # so exclude any commits that are on any other branches
+            # e.g. git rev-list <commit for B3> ^master ^B2
+            # NOTE: have to use commit, not ref, because if this is called in pre-receive the branch name of ref won't
+            # actually have been set up yet!
+            new_commits = Hook.shell!("git rev-list #{commit} #{exclude_branches}").split("\n")
+          else
+            # existing branch, base..commit is right
+            new_commits = Hook.shell!("git rev-list #{base}..#{commit}").split("\n")
+          end
+
           new_commits.each do |one_commit|
             self.commit_ref_map[one_commit] ||= [];
             self.commit_ref_map[one_commit] << ref  # name of the branch associated with this commit
@@ -122,16 +150,12 @@ module RubyGitHooks
         end
 
         self.commits = self.commit_ref_map.keys
-        puts self.commit_ref_map.inspect
 
         if !self.commits.empty?
             file_list_revision =  self.commits.first # can't just use HEAD - remote may be on branch with no HEAD
             self.ls_files = Hook.shell!("git ls-tree --full-tree --name-only -r #{file_list_revision}").split("\n")
           # TODO should store ls_files per commit (with status)?
         end
-
-
-
       },
 
       "pre-commit" => proc {

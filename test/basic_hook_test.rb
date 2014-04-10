@@ -109,18 +109,25 @@ HOOK
   end
 
   def test_simple_pre_receive
-    add_hook("parent_repo.git", "pre-receive", TEST_HOOK_BODY)
+    @hook_name ||= "pre-receive"
+    add_hook("parent_repo.git", @hook_name, TEST_HOOK_BODY)
 
     new_single_file_commit "child_repo"
+
     git_push("child_repo")
 
-    assert File.exist?(TEST_PATH), "Test pre-receive hook didn't run!"
-    assert File.read(TEST_PATH).include?("Single-file commit"),
-      "No file contents reached pre-receive hook!"
+    assert File.exist?(TEST_PATH), "Test #{@hook_name} hook didn't run!"
+
+    # file contents not expected to reach pre-receive hook for first push of a branch
+   # assert File.read(TEST_PATH).include?("Single-file commit"),  "No file contents reached pre-receive hook!"
   end
 
+
   def test_multiple_pre_receive
-    add_hook("parent_repo.git", "pre-receive", TEST_HOOK_MULTI)
+    @hook_name ||= "pre-receive"
+    add_hook("parent_repo.git", @hook_name, TEST_HOOK_MULTI)
+
+    before_commits =  git_revlist_all("child_repo")  # commits already in the repo
 
     new_single_file_commit "child_repo"
 
@@ -130,19 +137,89 @@ HOOK
 
     assert File.exist?(TEST_PATH), "Test pre-receive hook didn't run!"
 
-    commits =  git_revlist("child_repo")  # will give us all the commits, compare to output in file
-    commits =  git_revlist("child_repo")  # will give us all the commits, compare to output in file
+    commits =  git_revlist_all("child_repo") - before_commits  # will give us all the commits we just made
     contents = File.read(TEST_PATH)
     commits.each do |c|
-      assert contents.include?(c), "Missing commit info for #{c} in pre-receive hook!"
+      assert contents.include?(c), "Missing commit info for #{c} in #{@hook_name} hook!"
     end
     assert contents.include?("B1")
     assert contents.include?("master")
   end
 
+  def test_simple_post_receive
+    @hook_name = "post-receive"  # pre and post are the same, but want to test both
+    # default to pre but this lets us use the exact same tests.
+    test_simple_pre_receive
+  end
+
+  def test_multiple_post_receive
+    @hook_name = "post-receive"  # pre and post are the same, but want to test both
+    # default to pre but this lets us use the exact same tests.
+    test_multiple_branch_pre_receive
+  end
+
+  def test_delete_post_receive
+    @hook_name = "post-receive"  # pre and post are the same, but want to test both
+    # default to pre but this lets us use the exact same tests.
+    test_pre_receive_with_delete
+  end
+
+
+
+  def test_multiple_branch_pre_receive
+    @hook_name ||= "pre-receive"
+
+    add_hook("parent_repo.git", @hook_name, TEST_HOOK_MULTI)
+
+    before_commits =  git_revlist_all("child_repo")  # commits already in the repo
+
+    new_single_file_commit "child_repo" # commit to master
+    git_create_and_checkout_branch("child_repo", "B1")
+    new_single_file_commit "child_repo"
+    git_create_and_checkout_branch("child_repo", "B2")
+    new_single_file_commit "child_repo"
+    git_checkout("child_repo", "master")
+    new_single_file_commit "child_repo"
+
+    git_push_all("child_repo")  # pushes multiple branches
+
+    commits =  before_commits - git_revlist_all("child_repo")  # will give us all the commits we just made
+    contents = File.read(TEST_PATH)
+    commits.each do |c|
+      assert contents.include?(c), "Missing commit info for #{c} in #{@hook_name} hook!"
+    end
+    assert contents.include?("B1")
+    assert contents.include?("B2")
+    assert contents.include?("master")
+
+    # now push a commit to a single existing branch and a new branch
+    before_commits =  git_revlist_all("child_repo")  # commits already in the repo
+
+    git_create_and_checkout_branch("child_repo", "B4")  # no commits
+    git_checkout("child_repo", "B1")
+    new_single_file_commit "child_repo"
+    git_create_and_checkout_branch("child_repo", "B3")
+    new_single_file_commit "child_repo"
+
+    git_push_all("child_repo")  # pushes multiple branches
+
+    commits =  git_revlist_all("child_repo") - before_commits  # will give us all the commits we just made
+    contents = File.read(TEST_PATH)
+    commits.each do |c|
+      assert contents.include?(c), "Missing commit info for #{c} in pre-receive hook!"
+    end
+    assert contents.include?("B1")
+    assert contents.include?("B3")
+
+    refute contents.include?("B2")
+    refute contents.include?("master")
+
+  end
+
 
   def test_pre_receive_with_delete
-    add_hook("parent_repo.git", "pre-receive", TEST_HOOK_BODY)
+    @hook_name ||= "pre-receive"
+    add_hook("parent_repo.git", @hook_name, TEST_HOOK_BODY)
 
     new_commit "child_repo", "file_to_delete"
     git_push "child_repo"
@@ -151,9 +228,9 @@ HOOK
     git_commit "child_repo", "Deleted file_to_delete"
     git_push "child_repo"
 
-    assert File.exist?(TEST_PATH), "Test pre-receive hook didn't run!"
+    assert File.exist?(TEST_PATH), "Test #{@hook_name} hook didn't run!"
     assert File.read(TEST_PATH).include?('"file_to_delete"=>""'),
-      "File deletion did not reach pre-receive hook!"
+      "File deletion did not reach #{@hook_name} hook!"
   end
 
   def test_commit_msg

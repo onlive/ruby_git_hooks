@@ -105,8 +105,8 @@ module RubyGitHooks::GitOps
     Hook.shell! "cd #{repo_name} && git push --all"
   end
 
-  def git_revlist(repo_name = "child_repo")
-    Hook.shell!("cd #{repo_name} && git rev-list HEAD").split("\n")
+  def git_revlist_all(repo_name = "child_repo")
+    Hook.shell!("cd #{repo_name} && git rev-list --all").split("\n")
   end
 
 end
