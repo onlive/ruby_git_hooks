@@ -140,7 +140,7 @@ class JiraCommentAddHook < RubyGitHooks::Hook
     github_link = build_commit_uri(commit)      # have to do this separately
     branch = "Branch: #{get_commit_branch(commit)}"
     begin
-      content = "Revision: %h committed by %cn%nCommit date: %cd%n#{branch}%n#{github_link}%n%n#{commit_message}%n{noformat}%n"
+      content = "Revision: %h committed by %cn%nCommit date: %cd%n#{branch}%n#{github_link}%n%n#{commit_message}%n{noformat}"
       text = Hook.shell!("git log #{commit} -1 --name-status --pretty='#{content}'")
       text += "{noformat}" # git log puts changes at the bottom, we need to close the noformat tag for Jira
     rescue
