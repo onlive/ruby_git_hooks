@@ -91,7 +91,7 @@ module RubyGitHooks
         if !new_branches.empty?
           # For new branches, we will calculate which commits are new by specifically not including commits which are
           # present in any other branch (and therefore will have been processed with that branch)
-          all_branches = Hook.shell!("git branch").split(/\W+/).select{|b| !b.empty?}  # remove spaces and the *
+          all_branches = Hook.shell!("git branch").split(/[* \n]+/).select{|b| !b.empty?}  # remove spaces and the *
           # ref is like refs/heads/<branch_name>
           existing_branches = all_branches - new_branches
           exclude_branches = existing_branches.inject("") {|str, b| str + " ^" + b} # "^B1 ^B2"
