@@ -114,23 +114,6 @@ class JiraCommentAddHook < RubyGitHooks::Hook
     uri = "#{repo_remote_path}/commit/#{commit}"
   end
 
-  def get_change_list(commit)
-    # we want changes from the previous commit, if any
-    # ideally this list should be available from the ruby_git_hooks directly
-    # since they go through this same process.
-    current, base = Hook.shell!("git log #{commit} -2 --pretty=%H").split
-    if !base
-      # This is the initial commit so all files were added, but have to add the A ourselves
-      files_with_status = Hook.shell!("git ls-tree --name-status -r #{commit}").split("\n")
-      # put the A at the front
-      files_with_status.map!{|filename| "A\t" + filename}
-    else
-
-      files_with_status = Hook.shell!("git diff --name-status #{base}..#{current}")
-    end
-    files_with_status
-  end
-
   def get_commit_branch(commit)
     # get the branch (list) for this commit
     # will usually be a single ref ([refs/heads/branch_name]). but could
@@ -154,13 +137,16 @@ class JiraCommentAddHook < RubyGitHooks::Hook
     #
     # M	test.txt
 
-     github_link = build_commit_uri(commit)      # have to do this separately
-     changes = get_change_list(commit)
-
-     revision_and_date = Hook.shell!("git log #{commit} -1 --pretty='Revision: %h committed by %cn%nCommit date: %cd'") rescue ""
-     branch = "Branch: #{get_commit_branch(commit)}\n"
-
-    text = "#{revision_and_date}#{branch}#{github_link}\n\n#{commit_message}\n{noformat}#{changes}{noformat}"
+    github_link = build_commit_uri(commit)      # have to do this separately
+    branch = "Branch: #{get_commit_branch(commit)}"
+    begin
+      content = "Revision: %h committed by %cn%nCommit date: %cd%n#{branch}%n#{github_link}%n%n#{commit_message}%n{noformat}%n"
+      text = Hook.shell!("git log #{commit} -1 --name-status --pretty='#{content}'")
+      text += "{noformat}" # git log puts changes at the bottom, we need to close the noformat tag for Jira
+    rescue
+      text = "No commit details available for #{commit}\n#{commit_message}"
+    end
+    text
   end
 
   def check_one_commit(commit, commit_message)
