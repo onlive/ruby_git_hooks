@@ -74,6 +74,10 @@ module RubyGitHooks
 
       # Pre-receive gets no args, but STDIN with a list of changes.
       "pre-receive" => proc {
+        def commit_date(c)
+          date = Hook.shell!("git log #{c} --pretty=%ct -1").strip.to_i
+        end
+
         changes = []
         STDIN.each_line do |line|
           # STDERR.puts line # for debugging
@@ -85,6 +89,7 @@ module RubyGitHooks
         # as {commit1 => [ref1, ref2], commit2 => [ref1]}
         # For existing branches, this information is sent in directly "base commit ref"
         # BUT for branch new branches, the pre/post-receive hook gets "0 commit ref"
+        # ref is of the form refs/heads/branch_name
 
         new_branches = changes.select{|base, _, _ | base =~  /\A0+\z/ }.collect{|_,_, ref| ref[/refs\/heads\/(\S+)/,1] }
 
@@ -106,9 +111,9 @@ module RubyGitHooks
           new_branch = base =~  /\A0+\z/
           if new_branch
             # if base is 000 then this is a new branch and we have no easy way know what files were added
-            # TODO: we could figure it out based on the branch commit calculations (see below)
-            # BUT for now just don't include files changed in a new branch
+            # so for now just don't include files changed in a new branch
             # because really this should be done per commit or at least per branch anyway
+            # TODO: we could figure it out based on the branch commit calculations per branch (see below)
             files_with_status = []
           else
             files_with_status = Hook.shell!("git diff --name-status #{base}..#{commit}").split("\n")
@@ -149,7 +154,8 @@ module RubyGitHooks
           end
         end
 
-        self.commits = self.commit_ref_map.keys
+        # we want the list of commits sorted by commit date
+        self.commits = self.commit_ref_map.keys.sort{|a,b|commit_date(b) <=> commit_date(a)}
 
         if !self.commits.empty?
             file_list_revision =  self.commits.first # can't just use HEAD - remote may be on branch with no HEAD

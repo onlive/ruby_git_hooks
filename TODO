@@ -64,4 +64,6 @@
 * In jira_add_comment_hook, rescue DNS errors for VPN setups.  Allow
   the commit, but print a message.
 
+* In jira_add_comment_hook, allow to specify which branches to process
+
 * In ruby_git_hooks.rb, have "shell!" capture both STDOUT and STDERR.
