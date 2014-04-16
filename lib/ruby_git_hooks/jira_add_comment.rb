@@ -140,11 +140,12 @@ class JiraCommentAddHook < RubyGitHooks::Hook
     github_link = build_commit_uri(commit)      # have to do this separately
     branch = "Branch: #{get_commit_branch(commit)}"
     begin
-      content = "Revision: %h committed by %cn%nCommit date: %cd%n#{branch}%n#{github_link}%n%n#{commit_message}%n{noformat}"
+      content = "Revision: %h committed by %cn%nCommit date: %cd%n#{branch}%n#{github_link}%n%n%B%n{noformat}"
       text = Hook.shell!("git log #{commit} -1 --name-status --pretty='#{content}'")
       text += "{noformat}" # git log puts changes at the bottom, we need to close the noformat tag for Jira
-    rescue
-      text = "No commit details available for #{commit}\n#{commit_message}"
+    rescue => e
+      STDERR.puts "Error getting commit details for #{commit}: #{e.message}"
+      text = "Unable to get commit details for #{github_link}\n#{commit}\n#{commit_message}"
     end
     text
   end

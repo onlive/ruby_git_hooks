@@ -1,3 +1,4 @@
+# encoding: UTF-8
 # Copyright (C) 2013-2014 OL2, Inc. See LICENSE.txt for details.
 
 require "test_helper"
@@ -103,8 +104,19 @@ JSON
     # add a tag so describe works
 
     fake_hook_check("Message with GOOD-234 reference to Jira" )
+  end
 
+  def test_good_reference_with_long_message
 
+    mock(RestClient).get("https://user:password@jira.example.com/rest/api/latest/issue/GOOD-234") { <<JSON }
+{ "fields": { "status": { "name": "Open" } } }
+JSON
+
+    mock(RestClient).post.with_any_args {<<JSON }      # more complicated to check the args, just be sure it's called.
+{ "fields": { "status": { "name": "Open" } } }
+JSON
+
+    fake_hook_check("Message with GOOD-234 reference to Jira\n\nWhat if it can't handle unicode like ©?\n(Good, it can!)" )
   end
 
 
