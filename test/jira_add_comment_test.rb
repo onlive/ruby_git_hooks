@@ -33,12 +33,27 @@ class JiraCommentAddHookTest < HookTestCase
                                        "username" => "user", "password" => "password"
   end
 
-  def fake_hook_check(msg = "Commit message")
+  def fake_hook_check(msg = "Commit message", with_branch_merge = false)
     new_commit("child_repo", "file.txt","Contents",  msg)
     stub(@hook).commit_message { msg }
     sha = last_commit_sha("child_repo")
-    stub(@hook).commits{[sha]}
-    stub(@hook).commit_ref_map{  {sha => ["refs/heads/master"]} }  # it's always the master branch
+    hook_refs = {sha => ["refs/heads/master"]}   # it's always the master branch
+    if with_branch_merge
+      git_create_and_checkout_branch("child_repo", "B1")
+      new_commit("child_repo", "file2.txt","Contents",  "B1 commit\n(#{msg})")
+      sha2 = last_commit_sha("child_repo")
+
+      git_checkout("child_repo", "master")
+      git_merge("child_repo", "B1", "Merge Branch B1\n(#{msg})")
+      merge_sha = last_commit_sha("child_repo")
+
+      hook_refs[sha2] = ["refs/heads/master","refs/heads/B1"]
+      hook_refs[merge_sha] = ["refs/heads/master"]
+    end
+
+    stub(@hook).commit_ref_map{ hook_refs  }
+    stub(@hook).commits{hook_refs.keys}
+
     Dir.chdir("child_repo") do
       @hook.check
     end
@@ -119,6 +134,19 @@ JSON
     fake_hook_check("Message with GOOD-234 reference to Jira\n\nWhat if it can't handle unicode like ©?\n(Good, it can!)" )
   end
 
+  def test_good_ref_with_merge
+    stub(RestClient).get("https://user:password@jira.example.com/rest/api/latest/issue/GOOD-234") { <<JSON }
+{ "fields": { "status": { "name": "Open" } } }
+JSON
+
+    stub(RestClient).post.with_any_args {<<JSON }      # more complicated to check the args, just be sure it's called.
+{ "fields": { "status": { "name": "Open" } } }
+JSON
+    #  look at output to see what gets generated for message
+    puts "***** STARTING MERGE REF CHECK *****"
+    fake_hook_check("Message with GOOD-234 reference to Jira" , true)
+  end
+
 
   def test_multiple_references_with_good
     mock(RestClient).get("https://user:password@jira.example.com/rest/api/latest/issue/GOOD-234") { <<JSON }
@@ -177,6 +205,7 @@ JSON
 
 
   end
+
 
 
 

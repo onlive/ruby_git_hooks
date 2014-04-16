@@ -109,4 +109,8 @@ module RubyGitHooks::GitOps
     Hook.shell!("cd #{repo_name} && git rev-list --all").split("\n")
   end
 
+  def git_merge(repo_name = "child_repo", branch = "B1", msg = "Merge branch #{branch}")
+    # better be sure there's not going to be a conflict
+    Hook.shell!("cd #{repo_name} && git merge #{branch} --no-ff -m '#{msg}'")
+  end
 end
