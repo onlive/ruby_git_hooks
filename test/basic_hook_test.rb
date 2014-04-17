@@ -51,6 +51,7 @@ class TestHook < RubyGitHooks::Hook
   def check
     File.open("#{TEST_PATH}", "w") do |f|
       f.puts commit_ref_map.inspect
+      f.puts branches_changed.keys
     end
 
     puts "Test hook runs!"
@@ -213,6 +214,68 @@ HOOK
 
     refute contents.include?("B2")
     refute contents.include?("master")
+
+  end
+
+  def test_pre_receive_with_merge_commit
+    @hook_name ||= "pre-receive"
+
+    add_hook("parent_repo.git", @hook_name, TEST_HOOK_MULTI)
+
+    # set up master and 2 branches with commits
+    # make changes to different files so no merge conflicts
+    new_commit("child_repo", "file1.txt","Contents",  "master commit")
+    git_create_and_checkout_branch("child_repo", "B1")
+    new_commit("child_repo", "file2.txt","Contents",  "B1 commit")
+    git_create_and_checkout_branch("child_repo", "B2")
+    new_commit("child_repo", "file3.txt","Contents",  "B2 commit")
+    git_checkout("child_repo", "master")
+    new_commit("child_repo", "file4.txt","Contents",  "master commit")
+
+    git_push_all("child_repo")
+    before_commits =  git_revlist_all("child_repo")  # commits already in the repo
+
+    # now do a merge commit
+    git_checkout("child_repo", "master")
+    git_merge("child_repo", "B1")
+    git_push_all("child_repo")
+
+    # make sure none of the before_commits are in the output
+    contents = File.read(TEST_PATH)
+    before_commits.each do |c|
+      refute contents.include?(c), "#{c} shouldn't be processed!"
+    end
+  end
+
+  def test_pre_receive_ff_merge
+    @hook_name ||= "pre-receive"
+
+    add_hook("parent_repo.git", @hook_name, TEST_HOOK_MULTI)
+
+    git_create_and_checkout_branch("child_repo", "B1")
+    new_commit("child_repo", "file22.txt","Contents",  "B1 commit")
+    new_commit("child_repo", "file23.txt","Contents",  "B1 commit 2")
+    git_push_all("child_repo")
+    before_commits =  git_revlist_all("child_repo")  # commits already in the repo
+
+    puts "DOING MERGE (#{before_commits})"
+    # now a merge ff commit
+    # shouldn't be any new commits
+    git_checkout("child_repo", "master")
+    git_ff_merge("child_repo", "B1")
+    after_commits =  git_revlist_all("child_repo")  # commits already in the repo
+
+    git_push_all("child_repo")
+
+    assert_empty(before_commits-after_commits)  # there are no new commits
+    contents = File.read(TEST_PATH)
+    before_commits.each do |c|
+      refute contents.include?(c), "#{c} shouldn't be processed!"
+    end
+
+    # should check that branches_changed is accurate
+    assert contents.include?("master")
+
 
   end
 

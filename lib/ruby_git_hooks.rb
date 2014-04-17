@@ -59,11 +59,14 @@ module RubyGitHooks
 
       # refs associated with each commit
       attr_accessor :commit_ref_map
+
+      # branches included in this push
+      attr_accessor :branches_changed
     end
 
     # Instances of Hook delegate these methods to the class methods.
     HOOK_INFO = [ :files_changed, :file_contents, :file_diffs, :ls_files,
-                  :commits, :commit_message, :commit_message_file, :commit_ref_map ]
+                  :commits, :commit_message, :commit_message_file, :commit_ref_map, :branches_changed ]
     HOOK_INFO.each do |info_method|
       define_method(info_method) do |*args, &block|
         Hook.send(info_method, *args, &block)
@@ -84,32 +87,38 @@ module RubyGitHooks
           base, commit, ref = line.strip.split
           changes.push [base, commit, ref]
         end
-        self.commit_ref_map = {}  #
-        # commit_ref_map is a list of which new commits are in this push, and which branches they are associated with
+
+        self.branches_changed = {}  # {ref => [base, commit], ref2 => [base, commit]}
+
+        self.commit_ref_map = {}  # commit_ref_map is a list of which new commits are in this push,
+        # and which branches they are associated with
         # as {commit1 => [ref1, ref2], commit2 => [ref1]}
-        # For existing branches, this information is sent in directly "base commit ref"
-        # BUT for branch new branches, the pre/post-receive hook gets "0 commit ref"
-        # ref is of the form refs/heads/branch_name
 
-        new_branches = changes.select{|base, _, _ | base =~  /\A0+\z/ }.collect{|_,_, ref| ref[/refs\/heads\/(\S+)/,1] }
-
-        if !new_branches.empty?
-          # For new branches, we will calculate which commits are new by specifically not including commits which are
-          # present in any other branch (and therefore will have been processed with that branch)
-          all_branches = Hook.shell!("git branch").split(/[* \n]+/).select{|b| !b.empty?}  # remove spaces and the *
-          # ref is like refs/heads/<branch_name>
-          existing_branches = all_branches - new_branches
-          exclude_branches = existing_branches.inject("") {|str, b| str + " ^" + b} # "^B1 ^B2"
+        # figure out which commits have already been processed (everything we have seen before)
+        exclude_refs = []  # we know we have seen under these refs already
+            # includes all branches not referenced in this push
+            # and all commits before the base of referenced branches
+        all_branches = Hook.shell!("git for-each-ref --format='%(refname)' refs/heads/").split
+        changes.each do |base, _ , ref|
+          # ref is of the form refs/heads/branch_name
+          all_branches.delete(ref)  # we don't want to use the new ref for this branch
+          exclude_refs << "^#{base}" unless base =~  /\A0+\z/ # add the old ref for this branch to the exclude list
+                # (don't add if it's 0, this is a new branch with no old ref)
         end
 
+        # add the branches which aren't included in this push if any
+        all_branches.each { |ref|  exclude_refs << "^#{ref}" }
 
         self.files_changed = []
         self.file_contents = {}
         self.file_diffs = {}
 
         changes.each do |base, commit, ref|
-          new_branch = base =~  /\A0+\z/
-          if new_branch
+          self.branches_changed[ref] = [base, commit]
+
+          # TODO : calculate file_diffs and file_contents PER COMMIT for pre and post receive hooks
+          # for now it just does the overall diffs
+          if base =~  /\A0+\z/
             # if base is 000 then this is a new branch and we have no easy way know what files were added
             # so for now just don't include files changed in a new branch
             # because really this should be done per commit or at least per branch anyway
@@ -134,19 +143,10 @@ module RubyGitHooks
               file_contents[file_changed] = ""
             end
           end
-
-          # now calculate which commits are new
-          if new_branch
-            # new branch, but we don't want to include all commits from beginning of time
-            # so exclude any commits that are on any other branches
-            # e.g. git rev-list <commit for B3> ^master ^B2
-            # NOTE: have to use commit, not ref, because if this is called in pre-receive the branch name of ref won't
-            # actually have been set up yet!
-            new_commits = Hook.shell!("git rev-list #{commit} #{exclude_branches}").split("\n")
-          else
-            # existing branch, base..commit is right
-            new_commits = Hook.shell!("git rev-list #{base}..#{commit}").split("\n")
-          end
+          
+          # calculate which commits are new - exclude any commits that are on any other branches
+          # e.g. git rev-list <commit for B3> ^old_B3 ^master ^B2
+          new_commits = Hook.shell!("git rev-list #{commit} #{exclude_refs.join(' ')}").split("\n")
 
           new_commits.each do |one_commit|
             self.commit_ref_map[one_commit] ||= [];
