@@ -145,8 +145,9 @@ module RubyGitHooks
           end
           
           # calculate which commits are new - exclude any commits that are on any other branches
-          # e.g. git rev-list <commit for B3> ^old_B3 ^master ^B2
-          new_commits = Hook.shell!("git rev-list #{commit} #{exclude_refs.join(' ')}").split("\n")
+          # e.g. git rev-list <commit for B3> ^old_B3 ^master ^B2 --
+          # (the "--" at the end tells git these are refs NOT file references)
+          new_commits = Hook.shell!("git rev-list #{commit} #{exclude_refs.join(' ')} --").split("\n")
 
           new_commits.each do |one_commit|
             self.commit_ref_map[one_commit] ||= [];
