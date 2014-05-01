@@ -258,7 +258,6 @@ HOOK
     git_push_all("child_repo")
     before_commits =  git_revlist_all("child_repo")  # commits already in the repo
 
-    puts "DOING MERGE (#{before_commits})"
     # now a merge ff commit
     # shouldn't be any new commits
     git_checkout("child_repo", "master")

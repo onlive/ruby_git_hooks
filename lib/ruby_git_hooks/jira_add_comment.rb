@@ -165,7 +165,7 @@ class JiraCommentAddHook < RubyGitHooks::Hook
   def check_one_commit(commit, commit_message)
     STDERR.puts "Checking #{commit[0..6]} #{commit_message.lines.first}"
 
-    jira_tickets = commit_message.scan(JiraReferenceCheckHook::JIRA_TICKET_REGEXP).map(&:strip)
+    jira_tickets = commit_message.scan(JiraReferenceCheckHook::JIRA_TICKET_REGEXP).map(&:strip).uniq
     if jira_tickets.length == 0
       STDERR.puts ">>Commit message must refer to a jira ticket"
       add_error_to_report(commit, commit_message, "no_jira")
