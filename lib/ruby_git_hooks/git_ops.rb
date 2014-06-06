@@ -58,6 +58,16 @@ module RubyGitHooks::GitOps
     @single_file_counter += 1
   end
 
+  def new_multi_file_commit(num_files = 3, repo_name = "child_repo", commit_message = "multi-file commit", base_filename = "test", contents="Contents")
+    (1..num_files).each do |num|
+      File.open(File.join(repo_name, base_filename + num.to_s), "w") do |f|
+        f.write(contents)
+      end
+    end
+    Hook.shell! "cd #{repo_name} && git add . && git commit -m \"#{commit_message}\""
+
+  end
+
   def git_delete(repo_name="child_repo", filename="file_to_delete")  
     # filename is a file that has already been added and commited to the repo
     Hook.shell! "cd #{repo_name} && git rm #{filename}"
@@ -67,7 +77,6 @@ module RubyGitHooks::GitOps
     # filename is a file that has already been added and commited to the repo
     Hook.shell! "cd #{repo_name} && git mv #{filename} #{new_filename}"
   end
-
 
   def last_commit_sha(repo_name = "child_repo")
     Hook.shell!("cd #{repo_name} && git log -n 1 --format=%H").chomp

@@ -159,7 +159,6 @@ JSON
 { "fields": { "status": { "name": "Open" } } }
 JSON
     #  look at output to see what gets generated for message
-    puts "***** STARTING MERGE REF CHECK *****"
     fake_hook_check("Message with GOOD-234 reference to Jira" , true)
   end
 
@@ -219,6 +218,43 @@ JSON
 
     fake_hook_check("Message with CLOSE-123 don't check if closed reference to Jira" )
 
+
+  end
+
+
+  def test_first_commit
+    # if we had a way to check the actual message generated for the content, which we don't right now
+    # we should check that the first commit shows the changes with "A" in front of them and with the correct
+    # formatting (we missed a bug where it leaves them in an array instead of a list).  BUT we can at least
+    # do a new commit with multiple files and then look at the output to be sure it's right.
+
+    puts "TEST FIRST COMMIT"
+    mock(RestClient).get("https://user:password@jira.example.com/rest/api/latest/issue/GOOD-234") { <<JSON }
+{ "fields": { "status": { "name": "Open" } } }
+JSON
+
+    mock(RestClient).post.with_any_args {<<JSON }      # more complicated to check the args, just be sure it's called.
+{ "fields": { "status": { "name": "Open" } } }
+JSON
+    git_tag("child_repo", "0.1")
+
+    # we want to test the very first commit, pushed with multiple files,
+    # so have to do it specifically instead of what's already set up
+    # (can still use @hook)
+
+    new_bare_repo("parent_repo2.git")
+    clone_repo("parent_repo2.git", "child_repo2")
+    new_multi_file_commit(3, "child_repo2", "Message with GOOD-234 reference to Jira" )
+    stub(@hook).commit_message { msg }
+    sha = last_commit_sha("child_repo2")   # one commit sha, multiple files changed
+    hook_refs = {sha => ["refs/heads/master"]}   # it's always the master branch
+    stub(@hook).commit_ref_map{ hook_refs  }
+    stub(@hook).commits{hook_refs.keys}
+    Dir.chdir("child_repo2") do
+      @hook.check
+    end
+
+    # and look and see if it looks right...
 
   end
 

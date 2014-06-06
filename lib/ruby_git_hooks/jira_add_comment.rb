@@ -121,9 +121,8 @@ class JiraCommentAddHook < RubyGitHooks::Hook
       # This is the initial commit so all files were added, but have to add the A ourselves
       files_with_status = Hook.shell!("git ls-tree --name-status -r #{commit}").split("\n")
       # put the A at the front
-      files_with_status.map!{|filename| "A\t" + filename}
+      files_with_status = files_with_status.map{|filename| "A\t" + filename}.join("\n")
     else
-
       files_with_status = Hook.shell!("git diff --name-status #{base}..#{current}")
     end
     files_with_status
