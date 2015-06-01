@@ -24,6 +24,14 @@ every Ruby you use day-to-day from the command line.
 
 ## Usage
 
+Setup the Pivotal API token with git:
+
+    git config pivotal.token {your-pivotal-tracker-token}
+
+Verify that config parameter is correct:
+
+    git config --get pivotal.token
+
 ## Writing Hook Scripts
 
 Your new hook script should have a Ruby shebang line (see below).  You
