@@ -22,7 +22,7 @@ run with Bundler.  Not only do you not need to add it to your Gemfile,
 it probably won't help.  So make sure ruby_git_hooks is installed for
 every Ruby you use day-to-day from the command line.
 
-## Usage
+To use with Pivotal Tracker:
 
 Setup the Pivotal API token with git:
 
